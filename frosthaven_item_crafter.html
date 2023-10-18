@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+
+  <style>
+    /* .dev_tools{
+
+    } */
+    .back_of_card{
+      position: absolute;
+      inset: 5px auto 5px calc(100% - 4px);
+      height: 150px;
+      width: auto;
+      border: 5px yellow;
+    }
+    input[type=number]{
+      width: 75px;
+    }
+    .flex-container{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .flex-vertical{
+      display: flex;
+      flex-direction: column;
+    }
+    .crafting{
+      /* flex-horizontal */
+      display: flex;
+      flex-direction: row;
+      text-align: center;
+      width: 260px;
+      justify-content: space-between;
+      border: 5px solid #363636;
+    }
+    .card_div{
+      border: 5px solid #363636;
+      width: 110px;
+      position: relative;
+    }
+    .card_front{
+      background-color: blue;
+      border-radius: 4px;
+    }
+    .card_number{
+      font-size: larger;
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      text-align: left;
+      border: 3px solid #363636;
+      border-radius: 90px;
+      background-color: #506aff;
+      width: fit-content;
+    }
+    img{
+      width: 100px;
+    }
+    body{
+      background: #112;
+      font-family: sans-serif;
+      color: #fff;
+    }
+
+  </style>
+
+</head>
+<body>
+
+  <form id="form">
+    <div class="flex-horizontal">
+
+      <label>Unlocked Items
+        <input type="text"
+          name="unlocked_cards"
+          onblur="parse_input()"
+          id="unlocked_cards">
+      </label>
+      <label>
+        <input type="checkbox"
+         name="ignore_unlocked_cards"
+         id="ignore_unlocked_cards">
+          Show Locked Items
+      </label>
+    </div>
+    <div>
+      <label>Slot
+        <select onchange="parse_input()"
+          name="slot_filter"
+          id="slot_filter">
+          <option value="" >All</option>
+          <option value="h">Head</option>
+          <option value="b">Body</option>
+          <option value="d">Dual Handed</option>
+          <option value="s">Single Handed</option>
+          <option value="l">Legs</option>
+          <option value="i">Small Item</option>
+        </select>
+      </label>
+    </div>
+    <div>
+      <label>Show Craftable Items
+        <input type="checkbox"
+          onblur="parse_input()"
+          name="show_craftable"
+          id="show_craftable">
+      </label>
+    </div>
+
+    <br>
+
+    <div>
+      <label>Owned Items<br>
+        <input type="text"
+          onblur="parse_input()"
+          name="owned_cards"
+          id="owned_cards">
+      </label>
+    </div>
+    <div>
+      <label>Gold<br>
+        <input type="number"
+        onblur="parse_input()"
+        min="0"
+        name="gold"
+        id="gold">
+      </label>
+    </div>
+  <br>
+
+    <div class="crafting">
+      <label>Wood<br>
+        <input type="number"
+          min="0"
+          onblur="parse_input()"
+          name="wood"
+          id="wood">
+      </label>
+      <label>Metal<br>
+        <input type="number"
+          min="0"
+          onblur="parse_input()"
+          name="metl"
+          id="metl">
+      </label>
+      <label>Hide<br>
+        <input type="number"
+          min="0"
+          onblur="parse_input()"
+          name="hide"
+          id="hide">
+      </label>
+    </div>
+
+    <div class="crafting">
+      <label>Arrowvine<br>
+        <input type="number"
+          min="0"
+          onblur="parse_input()"
+          name="arrowvine"
+          id="arrowvine">
+      </label>
+      <label>Axenut<br>
+        <input type="number"
+          min="0"
+          onblur="parse_input()"
+          name="axenut"
+          id="axenut">
+      </label>
+      <label>Corpsecap<br>
+        <input type="number"
+          min="0"
+          onblur="parse_input()"
+          name="corpsecap"
+          id="corpsecap">
+      </label>
+    </div>
+
+    <div class="crafting">
+      <label>Flamefruit<br>
+        <input type="number"
+          min="0"
+          onblur="parse_input()"
+          name="flamefruit"
+          id="flamefruit">
+      </label>
+      <label>Rockroot<br>
+        <input type="number"
+          min="0"
+          onblur="parse_input()"
+          name="rockroot"
+          id="rockroot">
+      </label>
+      <label>Snowthistle<br>
+        <input type="number"
+          min="0"
+          onblur="parse_input()"
+          name="snowthistle"
+          id="snowthistle">
+      </label>
+    </div>
+    <div>
+      <button
+        onclick="reset_crafting()"
+        class="dev_tools"
+        id="dev_tools_reset_crafting">
+        Reset
+      </button>
+    </div>
+
+  </form>
+  <br>
+
+
+
+  <div id="grid_layout" class="flex-container">
+
+  </div>
+
+  <script src="frosthaven_item_crafter.js"></script>
+</body>
+</html>
