@@ -24,7 +24,7 @@ get_data();
 async function get_data()
 {
   if (item_data) { return item_data; }
-  let item_data_json = await fetch("/item-data.json");
+  let item_data_json = await fetch("./item-data.json");
   item_data = await item_data_json.json();
 
   for (const el of item_data.items) {
@@ -34,7 +34,7 @@ async function get_data()
 
   if (location.hash) {
     let hash = location.hash;
-    parse_hash(hash);
+    // parse_hash(hash);
   }
 
 }
@@ -103,7 +103,8 @@ function parse_input()
   rockroot    = document.getElementById("rockroot"   ).valueAsNumber || 0;
   snowthistle = document.getElementById("snowthistle").valueAsNumber || 0;
 
-  show_items();
+  let item_array = item_data.items.filter(filter_func);
+  create_cards(item_array);
 }
 
 document.querySelector("form").addEventListener("submit",
@@ -259,13 +260,17 @@ function filter_craftable_c(el)
     let has_item_119 = special_items_to_craft.has(item_data.items[118]);
     if (special_items_to_craft.size > (has_item_98 ? 1 : 0) + (has_item_119 ? 1 : 0)) {
       // ^ this if check feels dumb, particularly the ternaries
-      console.warn("Unhandled special items", special_items_to_craft);
-      return false;
+      for (const sp_item of special_items_to_craft) {
+        return handle_special(sp_item);
+      }
+
+      // console.warn("Unhandled special items", special_items_to_craft);
+      // return false;
     }
     if (has_item_98 && has_item_119) {
       // this is never the case but for completeness we handle it anyway
       return (
-        has_at_least_herbs(5, 1)
+            has_at_least_herbs(5, 1)
         || (has_at_least_herbs(4, 1) && has_at_least_herbs(1, 2))
         || (has_at_least_herbs(3, 1) && has_at_least_herbs(2, 2))
         || (has_at_least_herbs(2, 2) && has_at_least_herbs(1, 3))
@@ -295,28 +300,32 @@ function filter_craftable_c(el)
   return true;
 }
 
+function handle_special(el)
+{
+  if (el.number == 98) {
+    if (has_at_least_herbs(2, 1)) {
+      return true;
+    }
+  }
+  if (el.number == 119) {
+    if ((has_at_least_herbs(2, 1)) &&
+        (has_at_least_herbs(1, 2)) ||
+        (has_at_least_herbs(3, 1)))
+      {
+      return true;
+    }
+  }
+  return false;
+}
+
 
 function filter_craftable_b(el)
 {
   let flag = false;
   // if (el.number === 1) debugger;
   if (el.resources["-"]) {
-    if (el.number == 98) {
-      if (has_at_least_herbs(2, 1)) {
-        return true;
-      }
-    }
-    if (el.number == 119) {
-      if ((has_at_least_herbs(2, 1)) &&
-          (has_at_least_herbs(1, 2)) ||
-          (has_at_least_herbs(3, 1)))
-        {
-        return true;
-      }
-    }
-    return false;
+    handle_special(el);
   }
-
   else {
     if (el.resources.i.length > 0) {
       let current_req = {};
@@ -508,8 +517,6 @@ function filter_craftable(el)
       return false;
 }
 
-
-
 function parse_cost(item)
 {
   let cost_array = item.cost.split(",");
@@ -563,17 +570,6 @@ function filter_func(el, indx, arr)
   return true;
 }
 
-function show_items()
-{
-  let item_array = item_data.items.filter(filter_func);
-  create_cards(item_array);
-}
-
-function flip_card(item)
-{
-  src="/item-images/"+item.file_back;
-}
-
 function create_cards(item_array)
 {
   let card_front;
@@ -597,6 +593,7 @@ function create_cards(item_array)
     card_front = document.createElement("img");
     card_button.append(card_front);
 
+    // Swap front and back button
     card_button.onclick=function (event) {
       let backSide=event.target.dataset.otherSide;
       let currentSide = event.target.src;
@@ -609,16 +606,16 @@ function create_cards(item_array)
       event.target.dataset.otherFake = currentSide;
     };
 
-    card_front.src="/item-images/" + item.file;
+    card_front.src="./item-images/" + item.file;
     card_front.className="card_front";
     div.append(card_button);
 
     if (item.usage == "f") {
-      card_front.dataset.otherSide = '/item-images/'+item.file_back;
-      card_front.dataset.otherFake = '/icons-slots/fake-card-front.png';
+      card_front.dataset.otherSide = './item-images/'+item.file_back;
+      card_front.dataset.otherFake = './icons-slots/fake-card-front.png';
 
       let card_back = document.createElement("img");
-      card_back.src="/icons-slots/fake-card-back.png";
+      card_back.src="./icons-slots/fake-card-back.png";
       card_back.className="back_of_card";
       div.append(card_back);
     }
