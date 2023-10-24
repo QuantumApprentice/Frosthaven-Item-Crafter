@@ -81,11 +81,21 @@
           id="unlocked_cards">
       </label>
       <label>
-        <input type="checkbox"
+        <!-- <input type="checkbox"
          name="ignore_unlocked_cards"
          id="ignore_unlocked_cards">
-          Show Locked Items
+          Show Locked Items -->
+          <select onchange="parse_input()"
+            name="locked_input"
+            id="locked_input">
+            <option value="unlock"      >Unlocked Only       </option>
+            <option value="unlock&craft">Unlocked & Craftable</option>
+            <option value="owned"       >Owned Items         </option>
+            <option value="all"         >All Items           </option>
+            <option value="all&craft"   >All Craftable Items </option>
+          </select>
       </label>
+
     </div>
     <div>
       <label>Slot
@@ -102,14 +112,14 @@
         </select>
       </label>
     </div>
-    <div>
+    <!-- <div>
       <label>Show Craftable Items
         <input type="checkbox"
           onblur="parse_input()"
           name="show_craftable"
           id="show_craftable">
       </label>
-    </div>
+    </div> -->
 
     <br>
 
@@ -214,7 +224,9 @@
 
   </form>
   <br>
-
+  <button onclick="create_link()">
+    Copy Link
+  </button>
 
 
   <div id="grid_layout" class="flex-container">

@@ -16,8 +16,9 @@ let snowthistle = 0;
 let owned_cards = [];
 let unlocked_cards = [];
 let slot_type = "";
-let useItemNumberFilter = false;
-let show_craftable = false;
+// let useItemNumberFilter = false;
+let selectedFilter = "";
+// let show_craftable = false;
 
 let item_data;
 get_data();
@@ -34,24 +35,70 @@ async function get_data()
 
   if (location.hash) {
     let hash = location.hash;
-    // parse_hash(hash);
+    parse_hash(hash);
   }
 
 }
 
 function parse_hash(hash)
 {
-  // console.log("hash: ", hash);
-  // let arr = hash.split(";");
-  // console.log("hash arr: ", arr);
+  let str_arr = hash.substring(1).split(";");
+  let final_arr = [];
 
+  for (const el of str_arr) {
+    final_arr.push(el.split("="));
+  }
   const form = document.getElementById("form");
-  // const form = document.querySelector("form");
-  const formData = new FormData(form);
-  for (const [key, val] of formData) {
-    console.log("formdata:", key,  val);
+
+  for (const el of final_arr) {
+    let [key, val] = el;
+    // console.log("key:val= ", key, ":", val);
+    form.elements[key].value = val;
   }
 
+  parse_input();
+  create_hash();
+}
+
+function create_hash()
+{
+
+  const form = document.getElementById("form");
+  const formData = new FormData(form);
+
+  // temp_str = Array.from(formData).map(
+  //   kvPair => kvPair.join('=')
+  //   ).join(';')
+
+  // /* approach 1 - functional: */ 
+  // let s = Array.from(formData).map(
+  //   kvPair => kvPair.join('=')
+  //   ).join(';');
+
+  // /* approach 2 - string concatenation: */
+  // let s = '';
+  // for (let [key, value] of formData) {
+  //   // if (s.length) { s += ';'; }
+  //   s += `${key}=${value};`;
+  // }
+  // s = s.slice(0,-1);
+  // console.log("s: ", s);
+
+  /* approach 3 - array joining: */
+  let parts = ["#"];
+  for (let [key, value] of formData) {
+    // if (parts.length) { parts.push(';');}
+    parts.push(key);
+    parts.push('=');
+    parts.push(value);
+    parts.push(";");
+  }
+  parts.splice(-1,1);
+  let s = parts.join('');
+
+
+
+  return s;
 
 }
 
@@ -87,8 +134,9 @@ function parse_input()
   owned_cards = parse_numbers(card_nums_string);
 
   slot_type           = document.getElementById("slot_filter").value;
-  useItemNumberFilter = !document.getElementById("ignore_unlocked_cards").checked;
-  show_craftable      = document.getElementById("show_craftable").checked;
+  // useItemNumberFilter = !document.getElementById("ignore_unlocked_cards").checked;
+  selectedFilter = document.getElementById("locked_input").value;
+  // show_craftable      = document.getElementById("show_craftable").checked;
 
   gold        = document.getElementById("gold"       ).valueAsNumber || 0;
 
@@ -105,6 +153,8 @@ function parse_input()
 
   let item_array = item_data.items.filter(filter_func);
   create_cards(item_array);
+
+  window.location.replace(create_hash());
 }
 
 document.querySelector("form").addEventListener("submit",
@@ -112,12 +162,15 @@ document.querySelector("form").addEventListener("submit",
     submitEvent.preventDefault();
     parse_input();
 });
-document.getElementById("ignore_unlocked_cards").addEventListener(
+// document.getElementById("ignore_unlocked_cards").addEventListener(
+//   'change', parse_input
+// );
+document.getElementById("locked_input").addEventListener(
   'change', parse_input
-);
-document.getElementById("show_craftable").addEventListener(
-  'change', parse_input
-);
+)
+// document.getElementById("show_craftable").addEventListener(
+//   'change', parse_input
+// );
 document.getElementById("owned_cards").addEventListener(
   'change', parse_input
 );
@@ -176,6 +229,14 @@ function has_at_least_herbs(amt, min)
 
 function filter_craftable_c(el)
 {
+  if (owned_cards.includes(el.number)) {
+    return false;
+  }
+
+  if (el.number >= 248 && el.number <= 264) {
+    return false;
+  }
+
   let items_to_craft = [el];
   let regular_items_to_craft = new Set();
   let special_items_to_craft = new Set();
@@ -256,17 +317,17 @@ function filter_craftable_c(el)
       return false;
     }
 
-    let has_item_98  = special_items_to_craft.has(item_data.items[97]);
-    let has_item_119 = special_items_to_craft.has(item_data.items[118]);
-    if (special_items_to_craft.size > (has_item_98 ? 1 : 0) + (has_item_119 ? 1 : 0)) {
-      // ^ this if check feels dumb, particularly the ternaries
-      for (const sp_item of special_items_to_craft) {
-        return handle_special(sp_item);
-      }
+    // let is_single_class_item = special_items_to_craft.size === 1 && special_items_to_craft.keys().next().value.resources.z;
+    // if (is_single_class_item) return false;
 
-      // console.warn("Unhandled special items", special_items_to_craft);
-      // return false;
+    let has_item_98   = special_items_to_craft.delete(item_data.items[97]);
+    let has_item_119  = special_items_to_craft.delete(item_data.items[118]);
+
+    if (special_items_to_craft.size > 0) {
+      console.warn("Unhandled special items", special_items_to_craft);
+      return false;
     }
+
     if (has_item_98 && has_item_119) {
       // this is never the case but for completeness we handle it anyway
       return (
@@ -556,17 +617,22 @@ function filter_func(el, indx, arr)
     return false;
   }
 
-  //unlocked filter to only show unlocked items
-  if (useItemNumberFilter && !unlocked_cards.includes(el.number)){
+  //unlocked items/owned items/craftable items filter
+  if (selectedFilter == "unlock" || selectedFilter == "unlock&craft")
+    if (!unlocked_cards.includes(el.number)){
     return false;
   }
-
-  //crafting filter to show items that are craftable (but not owned?)
-  if (show_craftable) {
+  if (selectedFilter == "all&craft" || selectedFilter == "unlock&craft") {
     if (!filter_craftable_c(el)) {
       return false;
     }
   }
+  if (selectedFilter == "owned") {
+    if (!owned_cards.includes(el.number)) {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -622,6 +688,12 @@ function create_cards(item_array)
 
     output.append(div);
   }
+}
+
+function create_link()
+{
+  let link = window.location.href;
+  navigator.clipboard.writeText(link);
 }
 
 
