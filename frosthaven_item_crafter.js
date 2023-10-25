@@ -1,5 +1,9 @@
 "use strict";
 ///home/quantum/.wine/drive_c/Program Files/Blackmagic Design/DaVinci Resolve
+
+let players = [];
+let globalnum = 0;
+
 let gold  = 0;
 
 let wood  = 0;
@@ -13,12 +17,10 @@ let flamefruit  = 0;
 let rockroot    = 0;
 let snowthistle = 0;
 
-let owned_cards = [];
-let unlocked_cards = [];
+let owned_items = [];
+let unlocked_items = [];
 let slot_type = "";
-// let useItemNumberFilter = false;
 let selectedFilter = "";
-// let show_craftable = false;
 
 let item_data;
 get_data();
@@ -52,8 +54,12 @@ function parse_hash(hash)
 
   for (const el of final_arr) {
     let [key, val] = el;
+
+    let formEl = form.elements[key];
+    if (!formEl) { continue; }
+
     // console.log("key:val= ", key, ":", val);
-    form.elements[key].value = val;
+    formEl.value = val;
   }
 
   parse_input();
@@ -102,7 +108,6 @@ function create_hash()
 
 }
 
-
 function parse_numbers(input)
 {
   let storage_arr = [];
@@ -127,21 +132,19 @@ function parse_numbers(input)
 
 function parse_input()
 {
-  let unlocked_cards_string = document.getElementById("unlocked_cards").value;
-  unlocked_cards = parse_numbers(unlocked_cards_string);
+  let unlocked_cards_string = document.getElementById("unlocked_items").value;
+  unlocked_items = parse_numbers(unlocked_cards_string);
 
-  let card_nums_string = document.getElementById("owned_cards").value;
-  owned_cards = parse_numbers(card_nums_string);
+  let card_nums_string = document.getElementById("owned_items").value;
+  owned_items = parse_numbers(card_nums_string);
 
-  slot_type           = document.getElementById("slot_filter").value;
-  // useItemNumberFilter = !document.getElementById("ignore_unlocked_cards").checked;
+  slot_type      = document.getElementById("slot_filter" ).value;
   selectedFilter = document.getElementById("locked_input").value;
-  // show_craftable      = document.getElementById("show_craftable").checked;
 
   gold        = document.getElementById("gold"       ).valueAsNumber || 0;
 
   wood        = document.getElementById("wood"       ).valueAsNumber || 0;
-  metal       = document.getElementById("metl"       ).valueAsNumber || 0;
+  metal       = document.getElementById("metal"       ).valueAsNumber || 0;
   hide        = document.getElementById("hide"       ).valueAsNumber || 0;
 
   arrowvine   = document.getElementById("arrowvine"  ).valueAsNumber || 0;
@@ -150,6 +153,8 @@ function parse_input()
   flamefruit  = document.getElementById("flamefruit" ).valueAsNumber || 0;
   rockroot    = document.getElementById("rockroot"   ).valueAsNumber || 0;
   snowthistle = document.getElementById("snowthistle").valueAsNumber || 0;
+
+  assign_player_stats(globalnum);
 
   let item_array = item_data.items.filter(filter_func);
   create_cards(item_array);
@@ -162,16 +167,10 @@ document.querySelector("form").addEventListener("submit",
     submitEvent.preventDefault();
     parse_input();
 });
-// document.getElementById("ignore_unlocked_cards").addEventListener(
-//   'change', parse_input
-// );
 document.getElementById("locked_input").addEventListener(
   'change', parse_input
 )
-// document.getElementById("show_craftable").addEventListener(
-//   'change', parse_input
-// );
-document.getElementById("owned_cards").addEventListener(
+document.getElementById("owned_items").addEventListener(
   'change', parse_input
 );
 
@@ -180,7 +179,7 @@ for (const input_el of document.querySelectorAll("input")) {
   input_el.addEventListener("input", parse_input);
 }
 
-function reset_crafting ()
+function reset_crafting()
 {
   for (const i of document.querySelectorAll("input[type=number]")) {
     i.value = "";
@@ -229,7 +228,7 @@ function has_at_least_herbs(amt, min)
 
 function filter_craftable_c(el)
 {
-  if (owned_cards.includes(el.number)) {
+  if (owned_items.includes(el.number)) {
     return false;
   }
 
@@ -249,11 +248,11 @@ function filter_craftable_c(el)
     }
     regular_items_to_craft.add(item);
     for (let item_num of item.resources.i) {
-      if (!owned_cards.includes(item_num)) {
+      if (!owned_items.includes(item_num)) {
         items_to_craft.push(item_data.items[item_num-1]);
       }
     }
-    if (!unlocked_cards.includes(item.number)) {
+    if (!unlocked_items.includes(item.number)) {
       return false;
     }
   }
@@ -405,7 +404,7 @@ function filter_craftable_b(el)
 
       for (const item_num of el.resources.i) {
         let current_item = item_data.items[item_num-1];
-        if (!owned_cards.includes(item_num)) {
+        if (!owned_items.includes(item_num)) {
           current_req.w += current_item.resources.w;
           current_req.m += current_item.resources.m;
           current_req.h += current_item.resources.h;
@@ -517,7 +516,7 @@ function filter_craftable(el)
                   for (const item_num2 of el.resources.i) {
                     if (item_num == item_num2) {continue;}
 
-                    if (!owned_cards.includes(item_num2)) {
+                    if (!owned_items.includes(item_num2)) {
                       let current = item_data.items[item_num2-1];
 
                       wood        -= current.resources.w;
@@ -533,7 +532,7 @@ function filter_craftable(el)
                     }
                   }
                   try {
-                    if (!owned_cards.includes(item_num)) {
+                    if (!owned_items.includes(item_num)) {
                       if (!filter_craftable(item_data.items[item_num-1])) {
                         return false;
                       }
@@ -618,8 +617,9 @@ function filter_func(el, indx, arr)
   }
 
   //unlocked items/owned items/craftable items filter
+  //interesting logic crossing here
   if (selectedFilter == "unlock" || selectedFilter == "unlock&craft")
-    if (!unlocked_cards.includes(el.number)){
+    if (!unlocked_items.includes(el.number)){
     return false;
   }
   if (selectedFilter == "all&craft" || selectedFilter == "unlock&craft") {
@@ -628,7 +628,7 @@ function filter_func(el, indx, arr)
     }
   }
   if (selectedFilter == "owned") {
-    if (!owned_cards.includes(el.number)) {
+    if (!owned_items.includes(el.number)) {
       return false;
     }
   }
@@ -640,7 +640,7 @@ function create_cards(item_array)
 {
   let card_front;
   let card_button;
-  let output = document.getElementById("grid_layout");
+  let output = document.getElementById("card_display");
   output.innerHTML="";
 
   for (const item of item_array) {
@@ -682,7 +682,7 @@ function create_cards(item_array)
 
       let card_back = document.createElement("img");
       card_back.src="./icons-slots/fake-card-back.png";
-      card_back.className="back_of_card";
+      card_back.className="card_back";
       div.append(card_back);
     }
 
@@ -696,23 +696,77 @@ function create_link()
   navigator.clipboard.writeText(link);
 }
 
+function change_name(el)
+{
+  let new_name = window.prompt("Enter player name.", el.textContent.trim());
+  if (!new_name) {
+    return;
+  }
+  el.firstElementChild.innerHTML = new_name.trim();
+  // el.replaceChild(document.createTextNode(new_name.trim()), el.firstChild);
+}
 
-// function show_all_cards(slot_type)
-// {
-//   document.getElementById("grid_layout").innerHTML="";
+function assign_player_stats(num)
+{
+  // let num = document.querySelector('form').elements['player'].value;
+  players[num] = {}
+  players[num].gold           = gold          ;
+  players[num].wood           = wood          ;
+  players[num].metal          = metal         ;
+  players[num].hide           = hide          ;
+  players[num].arrowvine      = arrowvine     ;
+  players[num].axenut         = axenut        ;
+  players[num].corpsecap      = corpsecap     ;
+  players[num].flamefruit     = flamefruit    ;
+  players[num].rockroot       = rockroot      ;
+  players[num].snowthistle    = snowthistle   ;
+  players[num].owned_items    = owned_items   ;
+}
 
-//   let card_front;
-//   let card_button;
-//   let output = document.getElementById("grid_layout");
+function show_player_stats()
+{
+  let num = Number(document.querySelector('form').elements['player'].value);
+  assign_player_stats(globalnum);
+  globalnum = num;
 
-//   for (const i of item_data.items) {
-//     card_button = document.createElement("button");
-//     card_front = document.createElement("img");
-//     card_button.append(card_front);
+  if (players[num]) {
+    gold           = players[num].gold          ;
+    wood           = players[num].wood          ;
+    metal          = players[num].metal         ;
+    hide           = players[num].hide          ;
+    arrowvine      = players[num].arrowvine     ;
+    axenut         = players[num].axenut        ;
+    corpsecap      = players[num].corpsecap     ;
+    flamefruit     = players[num].flamefruit    ;
+    rockroot       = players[num].rockroot      ;
+    snowthistle    = players[num].snowthistle   ;
+    owned_items    = players[num].owned_items   ;
+  }
+  else {
+    console.log("running?");
+    players[num] = {}
+    gold           = 0;
+    wood           = 0;
+    metal          = 0;
+    hide           = 0;
+    arrowvine      = 0;
+    axenut         = 0;
+    corpsecap      = 0;
+    flamefruit     = 0;
+    rockroot       = 0;
+    snowthistle    = 0;
+    owned_items    = 0;
+    reset_crafting();
+  }
 
-//     if (!slot_type || slot_type==i.slot) {
-//       card_front.src = "/item-images/" + i.file;
-//       output.append(card_button);
-//     }
-//   }
-// }
+  const form = document.getElementById("form");
+
+  for (const el of Object.entries(players[num])) {
+    let [key, val] = el;
+    console.log("key:val= ", key, ":", val);
+    form.elements[key].value = val;
+  }
+
+  
+  parse_input()
+}
