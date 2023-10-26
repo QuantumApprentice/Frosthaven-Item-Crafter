@@ -5,39 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
 
-
-  <!-- 
-    reddish: #422B2B (border: #A58A89),
-    greenish: #37422B (border: #88957A),
-    tealish: #2B3D42 (border: #80949A),
-    purplish: #2F2B42 (border: #948DA8),
-    pinkish: #422B3D (border: #A4889C)
-    -the pinkish and reddish are a little similar
-     so I might adjust them a little later 
-     but those are the colors I have at the moment 
-     for those things at the top of the sidebar -->
-
   <style>
     :root{
       --sidebar-width: 350px;
+      --card-width:    240px
     }
     *{
       box-sizing: border-box;
     }
+
+
+
+
     .card_div{
-      border: 5px solid #363636;
-      width: 110px;
       position: relative;
+      box-shadow: 2px 2px 10px 8px #0000007a;
     }
-    .card_front{
-      background-color: blue;
-      border-radius: 4px;
-      width: 100px;
+    .card_div button{
+      border:0;
+    }
+    .card_front{border-radius: 4px;
+      width: var(--card-width);
     }
     .card_back{
       position: absolute;
       inset: 5px auto 5px calc(100% - 4px);
-      height: 150px;
+      height: 360px;
       width: auto;
       border: 5px yellow;
     }
@@ -55,16 +48,20 @@
     .card_display{
       display: flex;
       flex-wrap: wrap;
-      gap: 15px;
+      gap: 35px;
       margin-left: var(--sidebar-width);
       padding: 0 0 0 5px;
-
     }
+
+
+
+
+
     .flex_row{
       display: flex;
       flex-direction: row;
       justify-content: space-between;
-      border: 5px solid #363636;
+      margin: 20px 0;
     }
     body{
       background: #112;
@@ -86,29 +83,24 @@
       display: flex;
       flex-direction: row;
       background-color: #112;
-      z-index: 1;
       top: 0;
       position: sticky;
-
+      z-index: 1;
       font-size: xx-large;
       padding: 0 0 30px 0;
       margin-left: var(--sidebar-width);
-    }
-    input[type=number]{
-      width: 100px;
+      margin-bottom: 10px;
     }
     input, select, button{
       background-color: #112;
       border-color: #76758B;
       color: white;
     }
-    .resources input{
-      font-size: 25px;
-      padding-left: 40px;
-    }
     .items input{
-      font-size: 25px;
+      font-size: 30px;
+      width: 100%;
     }
+
     select{
       border-radius: 100vmax;
       font-size: 30px;
@@ -122,21 +114,70 @@
       margin: 0 -5px;
       padding: 10px;
       text-align: center;
-
     }
     .random_buttons{
       font-size: 25px;
       border-radius: 10px;
     }
-    .icon{
-      width: 35px;
-      position: fixed;
+    .resources label{
+      display: inline-flex;
+      gap: 4px;
+      background-color: #112;
+      border: 1px solid #76758B;
     }
-    .flex_column{
-      display: flex;
-      flex-direction: column;
+    .resources label input{
+      background-color: transparent;
+      padding: 0;
+      margin: 0;
+      border: 0;
+      font-size: 25px;
+      width: 50px;
+      appearance: textfield;
     }
-    .highlight{
+    .resources label:hover input{
+      appearance: auto;
+    }
+
+    .players{
+      margin: 0 -5px;
+    }
+    .players button{
+      width: 100%;
+      text-align: center;
+      font-size: 30px;
+
+      display: block;
+      cursor: pointer;
+      border: 5px solid transparent;
+    }
+
+    .players button.highlight{
+      border-color: #ffffff60;
+    }
+    .players button.p1{
+      background-color: #37422B;
+    }
+    .players button.p2{
+      background-color: #2b3d42;
+    }
+    .players button.p3{
+      background-color: #2F2B42;
+    }
+    .players button.p4{
+      background-color: #3E2B42;
+    }
+
+  /*/*old highlight class for radios
+    .players button{
+      height: 35px;
+      background-color: #112;
+      position: relative;
+      cursor: pointer;
+      font-size: 22px;
+      user-select: none;
+      z-index: 0;
+    }
+     .highlight{
       position: absolute;
       top: 0;
       left: 0;
@@ -144,16 +185,6 @@
       width: 100%;
       z-index: -1;
       border: 5px solid #112;
-    }
-    .players{
-      background-color: #112;
-      position: relative;
-      text-align: center;
-      margin-bottom: 2px;
-      cursor: pointer;
-      font-size: 22px;
-      user-select: none;
-      z-index: 0;
     }
     .players input{
       position: absolute;
@@ -166,7 +197,7 @@
     }
     .players input:checked ~ .highlight{
       border: 5px solid #76758B;
-    }
+    } */
   </style>
 
 </head>
@@ -175,61 +206,57 @@
     <span class="title">Frosthaven Supplies</span>
 
     <form id="form">
-      <div class="flex_column">
-        <label class="players" ondblclick="change_name(this)">
-          <span>Player 1</span>
-          <input type="radio" 
-            name="player" 
-            value="0" 
-            onchange="show_player_stats()">
-          <span class="highlight"></span>
-        </label>
+      <div class="players">
+<!--    //example of trying to do this with a radio instead of a button
         <label class="players" ondblclick="change_name(this)">
           <span>Player 2</span>
           <input type="radio" 
             name="player" 
             value="1"
-            onchange="show_player_stats()">
+            onchange="update_highlight(this); show_player_stats();">
           <span class="highlight"></span>
-        </label>
-        <label class="players" ondblclick="change_name(this)">
-          <span>Player 3</span>
-          <input type="radio" 
-          name="player"
-          value="2"
-          onchange="show_player_stats()">
-          <span class="highlight"></span>
-        </label>
-        <label class="players" ondblclick="change_name(this)">
-          <span>Player 4</span>
-          <input type="radio" 
-          name="player"
-          value="3"
-          onchange="show_player_stats()">
-          <span class="highlight"></span>
-        </label>
+        </label> -->
+
+          <button type="button"
+            class="p1 highlight"
+            onclick="update_highlight(this); show_player_stats(0);"
+            ondblclick="change_name(this)"
+            >Player 1</button>
+
+          <button type="button"
+            class="p2"
+            onclick="update_highlight(this); show_player_stats(1);"
+            ondblclick="change_name(this)"
+            >Player 2</button>
+
+          <button type="button"
+            class="p3"
+            onclick="update_highlight(this); show_player_stats(2);"
+            ondblclick="change_name(this)"
+            >Player 3</button>
+
+          <button type="button"
+            class="p4"
+            onclick="update_highlight(this); show_player_stats(3);"
+            ondblclick="change_name(this)"
+            >Player 4</button>
       </div>
 
       <div class="resources">
         <div class="flex_row">
           <div>
-            <img src="./icons/r-gold.png" alt="Gold" class="icon">
-            <input type="number"
-            style="width: 125px;"
-            onblur="parse_input()"
-            min="0"
-            name="gold"
-            id="gold"
-            >
+            <label>
+              <img src="./icons/r-gold.png" alt="Gold" class="icon">
+              <input type="number"
+              style="width: 125px;"
+              onblur="parse_input()"
+              min="0"
+              name="gold"
+              id="gold"
+              >
+            </label>
           </div>
-          <div>
-            <button class="random_buttons"
-              onclick="reset_crafting()"
-              class="dev_tools"
-              id="dev_tools_reset_crafting">
-              Reset
-            </button>
-          </div>
+
         </div>
 
         <div class="flex_row">
@@ -334,9 +361,18 @@
       </div>
 
     </form>
-    <button onclick="create_link()" class="random_buttons">
-      Copy Link
-    </button>
+    <div class="flex_row">
+      <button class="random_buttons"
+        onclick="create_link()">
+        Copy Link
+      </button>
+      <button class="random_buttons"
+        onclick="reset_crafting()"
+        class="dev_tools"
+        id="dev_tools_reset_crafting">
+        Reset
+      </button>
+    </div>
   </div>
 
 

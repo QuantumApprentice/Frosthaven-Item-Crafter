@@ -3,25 +3,26 @@
 
 let players = [];
 let globalnum = 0;
+let g_stats = {};
 
-let gold  = 0;
+g_stats.gold           = 0;
 
-let wood  = 0;
-let metal = 0;
-let hide  = 0;
+g_stats.wood           = 0;
+g_stats.metal          = 0;
+g_stats.hide           = 0;
 
-let arrowvine   = 0;
-let axenut      = 0;
-let corpsecap   = 0;
-let flamefruit  = 0;
-let rockroot    = 0;
-let snowthistle = 0;
+g_stats.arrowvine      = 0;
+g_stats.axenut         = 0;
+g_stats.corpsecap      = 0;
+g_stats.flamefruit     = 0;
+g_stats.rockroot       = 0;
+g_stats.snowthistle    = 0;
 
-let owned_items = [];
-let unlocked_items = [];
-let slot_type = "";
+g_stats.owned_items    = [];
+g_stats.unlocked_items = [];
+
+let slot_type      = "";
 let selectedFilter = "";
-
 let item_data;
 get_data();
 async function get_data()
@@ -68,13 +69,8 @@ function parse_hash(hash)
 
 function create_hash()
 {
-
   const form = document.getElementById("form");
   const formData = new FormData(form);
-
-  // temp_str = Array.from(formData).map(
-  //   kvPair => kvPair.join('=')
-  //   ).join(';')
 
   // /* approach 1 - functional: */ 
   // let s = Array.from(formData).map(
@@ -93,7 +89,7 @@ function create_hash()
   /* approach 3 - array joining: */
   let parts = ["#"];
   for (let [key, value] of formData) {
-    // if (parts.length) { parts.push(';');}
+    // console.log("NaN? ", key, value);
     parts.push(key);
     parts.push('=');
     parts.push(value);
@@ -102,10 +98,7 @@ function create_hash()
   parts.splice(-1,1);
   let s = parts.join('');
 
-
-
   return s;
-
 }
 
 function parse_numbers(input)
@@ -133,26 +126,26 @@ function parse_numbers(input)
 function parse_input()
 {
   let unlocked_cards_string = document.getElementById("unlocked_items").value;
-  unlocked_items = parse_numbers(unlocked_cards_string);
+  g_stats.unlocked_items = parse_numbers(unlocked_cards_string);
 
   let card_nums_string = document.getElementById("owned_items").value;
-  owned_items = parse_numbers(card_nums_string);
+  g_stats.owned_items = parse_numbers(card_nums_string);
 
   slot_type      = document.getElementById("slot_filter" ).value;
   selectedFilter = document.getElementById("locked_input").value;
 
-  gold        = document.getElementById("gold"       ).valueAsNumber || 0;
+  g_stats.gold        = document.getElementById("gold"       ).valueAsNumber || 0;
 
-  wood        = document.getElementById("wood"       ).valueAsNumber || 0;
-  metal       = document.getElementById("metal"       ).valueAsNumber || 0;
-  hide        = document.getElementById("hide"       ).valueAsNumber || 0;
+  g_stats.wood        = document.getElementById("wood"       ).valueAsNumber || 0;
+  g_stats.metal       = document.getElementById("metal"      ).valueAsNumber || 0;
+  g_stats.hide        = document.getElementById("hide"       ).valueAsNumber || 0;
 
-  arrowvine   = document.getElementById("arrowvine"  ).valueAsNumber || 0;
-  axenut      = document.getElementById("axenut"     ).valueAsNumber || 0;
-  corpsecap   = document.getElementById("corpsecap"  ).valueAsNumber || 0;
-  flamefruit  = document.getElementById("flamefruit" ).valueAsNumber || 0;
-  rockroot    = document.getElementById("rockroot"   ).valueAsNumber || 0;
-  snowthistle = document.getElementById("snowthistle").valueAsNumber || 0;
+  g_stats.arrowvine   = document.getElementById("arrowvine"  ).valueAsNumber || 0;
+  g_stats.axenut      = document.getElementById("axenut"     ).valueAsNumber || 0;
+  g_stats.corpsecap   = document.getElementById("corpsecap"  ).valueAsNumber || 0;
+  g_stats.flamefruit  = document.getElementById("flamefruit" ).valueAsNumber || 0;
+  g_stats.rockroot    = document.getElementById("rockroot"   ).valueAsNumber || 0;
+  g_stats.snowthistle = document.getElementById("snowthistle").valueAsNumber || 0;
 
   assign_player_stats(globalnum);
 
@@ -191,22 +184,22 @@ function reset_crafting()
 function has_at_least_herbs(amt, min)
 {
   let total = 0;
-  if (amt <= arrowvine  ) { total += 1;
+  if (amt <= g_stats.arrowvine  ) { total += 1;
     if (total >= min) {return true;}
   }
-  if (amt <= axenut     ) { total += 1;
+  if (amt <= g_stats.axenut     ) { total += 1;
     if (total >= min) {return true;}
   }
-  if (amt <= corpsecap  ) { total += 1;
+  if (amt <= g_stats.corpsecap  ) { total += 1;
     if (total >= min) {return true;}
   }
-  if (amt <= flamefruit ) { total += 1;
+  if (amt <= g_stats.flamefruit ) { total += 1;
     if (total >= min) {return true;}
   }
-  if (amt <= rockroot   ) { total += 1;
+  if (amt <= g_stats.rockroot   ) { total += 1;
     if (total >= min) {return true;}
   }
-  if (amt <= snowthistle) { total += 1;
+  if (amt <= g_stats.snowthistle) { total += 1;
     if (total >= min) {return true;}
   }
 
@@ -228,7 +221,7 @@ function has_at_least_herbs(amt, min)
 
 function filter_craftable_c(el)
 {
-  if (owned_items.includes(el.number)) {
+  if (g_stats.owned_items.includes(el.number)) {
     return false;
   }
 
@@ -248,11 +241,11 @@ function filter_craftable_c(el)
     }
     regular_items_to_craft.add(item);
     for (let item_num of item.resources.i) {
-      if (!owned_items.includes(item_num)) {
+      if (!g_stats.owned_items.includes(item_num)) {
         items_to_craft.push(item_data.items[item_num-1]);
       }
     }
-    if (!unlocked_items.includes(item.number)) {
+    if (!g_stats.unlocked_items.includes(item.number)) {
       return false;
     }
   }
@@ -285,33 +278,33 @@ function filter_craftable_c(el)
     total_g += item.resources.g;
   }
 
-  wood        -= total_w;
-  metal       -= total_m;
-  hide        -= total_h;
+  g_stats.wood        -= total_w;
+  g_stats.metal       -= total_m;
+  g_stats.hide        -= total_h;
 
-  arrowvine   -= total_v;
-  axenut      -= total_n;
-  corpsecap   -= total_c;
-  flamefruit  -= total_f;
-  rockroot    -= total_r;
-  snowthistle -= total_s;
+  g_stats.arrowvine   -= total_v;
+  g_stats.axenut      -= total_n;
+  g_stats.corpsecap   -= total_c;
+  g_stats.flamefruit  -= total_f;
+  g_stats.rockroot    -= total_r;
+  g_stats.snowthistle -= total_s;
 
-  gold        -= total_g;
+  g_stats.gold        -= total_g;
 
   try {
     if (
-           wood        < 0
-        || metal       < 0
-        || hide        < 0
+           g_stats.wood        < 0
+        || g_stats.metal       < 0
+        || g_stats.hide        < 0
 
-        || arrowvine   < 0
-        || axenut      < 0
-        || corpsecap   < 0
-        || flamefruit  < 0
-        || rockroot    < 0
-        || snowthistle < 0
+        || g_stats.arrowvine   < 0
+        || g_stats.axenut      < 0
+        || g_stats.corpsecap   < 0
+        || g_stats.flamefruit  < 0
+        || g_stats.rockroot    < 0
+        || g_stats.snowthistle < 0
 
-        || gold        < 0
+        || g_stats.gold        < 0
     ) {
       return false;
     }
@@ -344,18 +337,18 @@ function filter_craftable_c(el)
       );
     }
   } finally {
-    wood        += total_w;
-    metal       += total_m;
-    hide        += total_h;
+    g_stats.wood        += total_w;
+    g_stats.metal       += total_m;
+    g_stats.hide        += total_h;
 
-    arrowvine   += total_v;
-    axenut      += total_n;
-    corpsecap   += total_c;
-    flamefruit  += total_f;
-    rockroot    += total_r;
-    snowthistle += total_s;
+    g_stats.arrowvine   += total_v;
+    g_stats.axenut      += total_n;
+    g_stats.corpsecap   += total_c;
+    g_stats.flamefruit  += total_f;
+    g_stats.rockroot    += total_r;
+    g_stats.snowthistle += total_s;
 
-    gold        += total_g;
+    g_stats.gold        += total_g;
   }
   return true;
 }
@@ -420,16 +413,16 @@ function filter_craftable_b(el)
         }
       }
       if (
-        current_req.w <= wood        &&
-        current_req.m <= metal       &&
-        current_req.h <= hide        &&
-        current_req.v <= arrowvine   &&
-        current_req.n <= axenut      &&
-        current_req.c <= corpsecap   &&
-        current_req.f <= flamefruit  &&
-        current_req.r <= rockroot    &&
-        current_req.s <= snowthistle &&
-        current_req.g <= gold
+        current_req.w <= g_stats.wood        &&
+        current_req.m <= g_stats.metal       &&
+        current_req.h <= g_stats.hide        &&
+        current_req.v <= g_stats.arrowvine   &&
+        current_req.n <= g_stats.axenut      &&
+        current_req.c <= g_stats.corpsecap   &&
+        current_req.f <= g_stats.flamefruit  &&
+        current_req.r <= g_stats.rockroot    &&
+        current_req.s <= g_stats.snowthistle &&
+        current_req.g <= g_stats.gold
       ) {
         flag = true;
       }
@@ -439,18 +432,18 @@ function filter_craftable_b(el)
 
     if (flag == true) {
       if (//required        inventory
-        el.resources.w <= wood        &&
-        el.resources.m <= metal       &&
-        el.resources.h <= hide        &&
+        el.resources.w <= g_stats.wood        &&
+        el.resources.m <= g_stats.metal       &&
+        el.resources.h <= g_stats.hide        &&
 
-        el.resources.v <= arrowvine   &&
-        el.resources.n <= axenut      &&
-        el.resources.c <= corpsecap   &&
-        el.resources.f <= flamefruit  &&
-        el.resources.r <= rockroot    &&
-        el.resources.s <= snowthistle &&
+        el.resources.v <= g_stats.arrowvine   &&
+        el.resources.n <= g_stats.axenut      &&
+        el.resources.c <= g_stats.corpsecap   &&
+        el.resources.f <= g_stats.flamefruit  &&
+        el.resources.r <= g_stats.rockroot    &&
+        el.resources.s <= g_stats.snowthistle &&
 
-        el.resources.g <= gold
+        el.resources.g <= g_stats.gold
         ) {
           return true;
         }
@@ -484,30 +477,30 @@ function filter_craftable(el)
   }
   else
   if (//required        inventory
-      el.resources.w <= wood        &&
-      el.resources.m <= metal       &&
-      el.resources.h <= hide        &&
+      el.resources.w <= g_stats.wood        &&
+      el.resources.m <= g_stats.metal       &&
+      el.resources.h <= g_stats.hide        &&
 
-      el.resources.v <= arrowvine   &&
-      el.resources.n <= axenut      &&
-      el.resources.c <= corpsecap   &&
-      el.resources.f <= flamefruit  &&
-      el.resources.r <= rockroot    &&
-      el.resources.s <= snowthistle &&
+      el.resources.v <= g_stats.arrowvine   &&
+      el.resources.n <= g_stats.axenut      &&
+      el.resources.c <= g_stats.corpsecap   &&
+      el.resources.f <= g_stats.flamefruit  &&
+      el.resources.r <= g_stats.rockroot    &&
+      el.resources.s <= g_stats.snowthistle &&
 
-      el.resources.g <= gold
+      el.resources.g <= g_stats.gold
       ) {
         if (el.resources.i.length > 0) {
-            wood        -= el.resources.w;
-            metal       -= el.resources.m;
-            hide        -= el.resources.h;
+            g_stats.wood        -= el.resources.w;
+            g_stats.metal       -= el.resources.m;
+            g_stats.hide        -= el.resources.h;
 
-            arrowvine   -= el.resources.v;
-            axenut      -= el.resources.n;
-            corpsecap   -= el.resources.c;
-            flamefruit  -= el.resources.f;
-            rockroot    -= el.resources.r;
-            snowthistle -= el.resources.s;
+            g_stats.arrowvine   -= el.resources.v;
+            g_stats.axenut      -= el.resources.n;
+            g_stats.corpsecap   -= el.resources.c;
+            g_stats.flamefruit  -= el.resources.f;
+            g_stats.rockroot    -= el.resources.r;
+            g_stats.snowthistle -= el.resources.s;
           try {
             for (const item_num of el.resources.i) {
 
@@ -519,16 +512,16 @@ function filter_craftable(el)
                     if (!owned_items.includes(item_num2)) {
                       let current = item_data.items[item_num2-1];
 
-                      wood        -= current.resources.w;
-                      metal       -= current.resources.m;
-                      hide        -= current.resources.h;
+                      g_stats.wood        -= current.resources.w;
+                      g_stats.metal       -= current.resources.m;
+                      g_stats.hide        -= current.resources.h;
 
-                      arrowvine   -= current.resources.v;
-                      axenut      -= current.resources.n;
-                      corpsecap   -= current.resources.c;
-                      flamefruit  -= current.resources.f;
-                      rockroot    -= current.resources.r;
-                      snowthistle -= current.resources.s;
+                      g_stats.arrowvine   -= current.resources.v;
+                      g_stats.axenut      -= current.resources.n;
+                      g_stats.corpsecap   -= current.resources.c;
+                      g_stats.flamefruit  -= current.resources.f;
+                      g_stats.rockroot    -= current.resources.r;
+                      g_stats.snowthistle -= current.resources.s;
                     }
                   }
                   try {
@@ -542,16 +535,16 @@ function filter_craftable(el)
                     for (const item_num2 of el.resources.i) {
                       if (item_num == item_num2) {continue;}
 
-                      wood        += item_data.items[item_num2-1].resources.w;
-                      metal       += item_data.items[item_num2-1].resources.m;
-                      hide        += item_data.items[item_num2-1].resources.h;
+                      g_stats.wood        += item_data.items[item_num2-1].resources.w;
+                      g_stats.metal       += item_data.items[item_num2-1].resources.m;
+                      g_stats.hide        += item_data.items[item_num2-1].resources.h;
 
-                      arrowvine   += item_data.items[item_num2-1].resources.v;
-                      axenut      += item_data.items[item_num2-1].resources.n;
-                      corpsecap   += item_data.items[item_num2-1].resources.c;
-                      flamefruit  += item_data.items[item_num2-1].resources.f;
-                      rockroot    += item_data.items[item_num2-1].resources.r;
-                      snowthistle += item_data.items[item_num2-1].resources.s;
+                      g_stats.arrowvine   += item_data.items[item_num2-1].resources.v;
+                      g_stats.axenut      += item_data.items[item_num2-1].resources.n;
+                      g_stats.corpsecap   += item_data.items[item_num2-1].resources.c;
+                      g_stats.flamefruit  += item_data.items[item_num2-1].resources.f;
+                      g_stats.rockroot    += item_data.items[item_num2-1].resources.r;
+                      g_stats.snowthistle += item_data.items[item_num2-1].resources.s;
                     }
                   }
 
@@ -560,16 +553,16 @@ function filter_craftable(el)
             }
           }
           finally {
-            wood        += el.resources.w;
-            metal       += el.resources.m;
-            hide        += el.resources.h;
+            g_stats.wood        += el.resources.w;
+            g_stats.metal       += el.resources.m;
+            g_stats.hide        += el.resources.h;
 
-            arrowvine   += el.resources.v;
-            axenut      += el.resources.n;
-            corpsecap   += el.resources.c;
-            flamefruit  += el.resources.f;
-            rockroot    += el.resources.r;
-            snowthistle += el.resources.s;
+            g_stats.arrowvine   += el.resources.v;
+            g_stats.axenut      += el.resources.n;
+            g_stats.corpsecap   += el.resources.c;
+            g_stats.flamefruit  += el.resources.f;
+            g_stats.rockroot    += el.resources.r;
+            g_stats.snowthistle += el.resources.s;
           }
         }
         return true;
@@ -619,7 +612,7 @@ function filter_func(el, indx, arr)
   //unlocked items/owned items/craftable items filter
   //interesting logic crossing here
   if (selectedFilter == "unlock" || selectedFilter == "unlock&craft")
-    if (!unlocked_items.includes(el.number)){
+    if (!g_stats.unlocked_items.includes(el.number)){
     return false;
   }
   if (selectedFilter == "all&craft" || selectedFilter == "unlock&craft") {
@@ -628,7 +621,7 @@ function filter_func(el, indx, arr)
     }
   }
   if (selectedFilter == "owned") {
-    if (!owned_items.includes(el.number)) {
+    if (!g_stats.owned_items.includes(el.number)) {
       return false;
     }
   }
@@ -655,7 +648,6 @@ function create_cards(item_array)
     div.className="card_div";
 
     card_button = document.createElement("button");
-    card_button.style="background-color: blue";
     card_front = document.createElement("img");
     card_button.append(card_front);
 
@@ -702,71 +694,57 @@ function change_name(el)
   if (!new_name) {
     return;
   }
-  el.firstElementChild.innerHTML = new_name.trim();
+  // el.firstElementChild.innerHTML = new_name.trim();
+  el.innerText = new_name.trim();
   // el.replaceChild(document.createTextNode(new_name.trim()), el.firstChild);
 }
 
 function assign_player_stats(num)
 {
-  // let num = document.querySelector('form').elements['player'].value;
-  players[num] = {}
-  players[num].gold           = gold          ;
-  players[num].wood           = wood          ;
-  players[num].metal          = metal         ;
-  players[num].hide           = hide          ;
-  players[num].arrowvine      = arrowvine     ;
-  players[num].axenut         = axenut        ;
-  players[num].corpsecap      = corpsecap     ;
-  players[num].flamefruit     = flamefruit    ;
-  players[num].rockroot       = rockroot      ;
-  players[num].snowthistle    = snowthistle   ;
-  players[num].owned_items    = owned_items   ;
+  players[num] = {};
+
+  const form = document.getElementById("form");
+  for (const el of new FormData(form)) {
+    let [key, val] = el;
+    // console.log("1key:val =>", key, ":", val);
+
+    players[num][key] = val;
+  }
+
 }
 
-function show_player_stats()
+function update_highlight(current_button)
 {
-  let num = Number(document.querySelector('form').elements['player'].value);
+  ////normal way of doing this
+  // for (const otherButtons of current_button.parentElement.querySelectorAll('button')) {
+  //   otherButtons.classList.remove("highlight");
+  // }
+  // el.classList.add("highlight");
+
+  //toggle way of doing this
+  for (const button of current_button.parentElement.querySelectorAll('button')) {
+    button.classList.toggle("highlight", button === current_button);
+  }
+}
+
+function show_player_stats(num)
+{
   assign_player_stats(globalnum);
+  // let num = Number(document.querySelector('form').elements['player'].value);
   globalnum = num;
 
-  if (players[num]) {
-    gold           = players[num].gold          ;
-    wood           = players[num].wood          ;
-    metal          = players[num].metal         ;
-    hide           = players[num].hide          ;
-    arrowvine      = players[num].arrowvine     ;
-    axenut         = players[num].axenut        ;
-    corpsecap      = players[num].corpsecap     ;
-    flamefruit     = players[num].flamefruit    ;
-    rockroot       = players[num].rockroot      ;
-    snowthistle    = players[num].snowthistle   ;
-    owned_items    = players[num].owned_items   ;
-  }
-  else {
-    console.log("running?");
+  if (!players[num]) {
     players[num] = {}
-    gold           = 0;
-    wood           = 0;
-    metal          = 0;
-    hide           = 0;
-    arrowvine      = 0;
-    axenut         = 0;
-    corpsecap      = 0;
-    flamefruit     = 0;
-    rockroot       = 0;
-    snowthistle    = 0;
-    owned_items    = 0;
     reset_crafting();
   }
 
   const form = document.getElementById("form");
-
   for (const el of Object.entries(players[num])) {
     let [key, val] = el;
-    console.log("key:val= ", key, ":", val);
+    // console.log("2key:val= ", key, ":", val);
     form.elements[key].value = val;
   }
 
-  
-  parse_input()
+  parse_input();
+
 }
