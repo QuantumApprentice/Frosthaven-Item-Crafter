@@ -8,7 +8,7 @@
   <style>
     :root{
       --sidebar-width: 350px;
-      --card-width:    240px
+      --card-height:   360px;
     }
     *{
       box-sizing: border-box;
@@ -24,13 +24,14 @@
     .card_div button{
       border:0;
     }
-    .card_front{border-radius: 4px;
-      width: var(--card-width);
+    .card_front{
+      border-radius: 4px;
+      height: var(--card-height);
     }
     .card_back{
       position: absolute;
       inset: 5px auto 5px calc(100% - 4px);
-      height: 360px;
+      height: var(--card-height);
       width: auto;
       border: 5px yellow;
     }
@@ -199,15 +200,15 @@
       border: 5px solid #76758B;
     } */
   </style>
-
 </head>
+
 <body>
   <div class="sidebar">
-    <span class="title">Frosthaven Supplies</span>
+    <!-- <span class="title">Frosthaven Supplies</span> -->
 
     <form id="form">
       <div class="players">
-<!--    //example of trying to do this with a radio instead of a button
+    <!-- //example of trying to do this with a radio instead of a button
         <label class="players" ondblclick="change_name(this)">
           <span>Player 2</span>
           <input type="radio" 
@@ -218,26 +219,31 @@
         </label> -->
 
           <button type="button"
-            class="p1 highlight"
+            class="p0 title"
             onclick="update_highlight(this); show_player_stats(0);"
+            >Frosthaven Supplies</button>
+
+          <button type="button"
+            class="p1 highlight"
+            onclick="update_highlight(this); show_player_stats(1);"
             ondblclick="change_name(this)"
             >Player 1</button>
 
           <button type="button"
             class="p2"
-            onclick="update_highlight(this); show_player_stats(1);"
+            onclick="update_highlight(this); show_player_stats(2);"
             ondblclick="change_name(this)"
             >Player 2</button>
 
           <button type="button"
             class="p3"
-            onclick="update_highlight(this); show_player_stats(2);"
+            onclick="update_highlight(this); show_player_stats(3);"
             ondblclick="change_name(this)"
             >Player 3</button>
 
           <button type="button"
             class="p4"
-            onclick="update_highlight(this); show_player_stats(3);"
+            onclick="update_highlight(this); show_player_stats(4);"
             ondblclick="change_name(this)"
             >Player 4</button>
       </div>
@@ -256,7 +262,6 @@
               >
             </label>
           </div>
-
         </div>
 
         <div class="flex_row">
@@ -406,7 +411,6 @@
 
 
     <div id="card_display" class="card_display">
-
     </div>
   </div>
 

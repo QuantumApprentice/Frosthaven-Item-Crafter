@@ -1,8 +1,16 @@
 "use strict";
 ///home/quantum/.wine/drive_c/Program Files/Blackmagic Design/DaVinci Resolve
+///frosthaven supplies, 
+// the owned items listing, 
+// the buttons on top of the items to add them to the owned/unlocked list, 
+// saving the different player's resources to the URL so the entire state can be saved/reloaded, 
+// including player names
+
+
+
 
 let players = [];
-let globalnum = 0;
+let selected_player = 1;
 let g_stats = {};
 
 g_stats.gold           = 0;
@@ -56,8 +64,10 @@ function parse_hash(hash)
   for (const el of final_arr) {
     let [key, val] = el;
 
+    
+
     let formEl = form.elements[key];
-    if (!formEl) { continue; }
+    if (!formEl) { debugger; continue; }
 
     // console.log("key:val= ", key, ":", val);
     formEl.value = val;
@@ -89,13 +99,31 @@ function create_hash()
   /* approach 3 - array joining: */
   let parts = ["#"];
   for (let [key, value] of formData) {
-    // console.log("NaN? ", key, value);
     parts.push(key);
     parts.push('=');
     parts.push(value);
     parts.push(";");
   }
+
+  // new URLSearchParams({foo: 1, bar: "xyz"}).toString()
+
+  // for (const player of players) {
+  // for (let i = 0; i <= 4; i++) {
+  //     // debugger;
+  //   parts.push("p", players[i].name);
+  //   if (!players[i]) { continue;}
+  //   for (const [key, val] of Object.entries(players[i])) {
+  //     console.log("key, val", key, val);
+  //     parts.push(key);
+  //     parts.push('=');
+  //     parts.push(val);
+  //     parts.push(";");
+  //   }
+  // }
+
+
   parts.splice(-1,1);
+
   let s = parts.join('');
 
   return s;
@@ -147,9 +175,10 @@ function parse_input()
   g_stats.rockroot    = document.getElementById("rockroot"   ).valueAsNumber || 0;
   g_stats.snowthistle = document.getElementById("snowthistle").valueAsNumber || 0;
 
-  assign_player_stats(globalnum);
+  assign_player_stats(selected_player);
 
   let item_array = item_data.items.filter(filter_func);
+  // console.log(item_array);
   create_cards(item_array);
 
   window.location.replace(create_hash());
@@ -207,7 +236,8 @@ function has_at_least_herbs(amt, min)
 }
 
 // So at the start of the function, 
-// I'd build up an array of "items that require crafting" 
+// I'd build up an array of 
+// "items that require crafting" 
 // - it would start with the item passed in, 
 // and then I would build it up until it has 
 // every non-owned dependant item in it. 
@@ -235,18 +265,21 @@ function filter_craftable_c(el)
   // this assumes each item is only ever in a crafting chain once
   while (items_to_craft.length > 0) {
     let item = items_to_craft.shift();
+    if (selectedFilter != "all&craft" && !g_stats.unlocked_items.includes(item.number)) {
+      
+      return false;
+    }
+
     if (item.resources["-"]) {
       special_items_to_craft.add(item);
-      continue;
     }
-    regular_items_to_craft.add(item);
-    for (let item_num of item.resources.i) {
-      if (!g_stats.owned_items.includes(item_num)) {
-        items_to_craft.push(item_data.items[item_num-1]);
+    else {
+      regular_items_to_craft.add(item);
+      for (let item_num of item.resources.i) {
+        if (!g_stats.owned_items.includes(item_num)) {
+          items_to_craft.push(item_data.items[item_num-1]);
+        }
       }
-    }
-    if (!g_stats.unlocked_items.includes(item.number)) {
-      return false;
     }
   }
 
@@ -262,6 +295,11 @@ function filter_craftable_c(el)
   let total_s = 0;
 
   let total_g = 0;
+
+  let current_stats = {...g_stats};
+  // for (const i of g_stats) {
+  //   current_stats.i = g_stats.i;
+  // }
 
   for (let item of regular_items_to_craft) {
     total_w += item.resources.w;
@@ -288,6 +326,18 @@ function filter_craftable_c(el)
   g_stats.flamefruit  -= total_f;
   g_stats.rockroot    -= total_r;
   g_stats.snowthistle -= total_s;
+
+  if (selected_player != 0) {
+    if (!players[0]) {
+      init_player_0();
+    }
+    g_stats.arrowvine   += parseInt(players[0].arrowvine  ) || 0;
+    g_stats.axenut      += parseInt(players[0].axenut     ) || 0;
+    g_stats.corpsecap   += parseInt(players[0].corpsecap  ) || 0;
+    g_stats.flamefruit  += parseInt(players[0].flamefruit ) || 0;
+    g_stats.rockroot    += parseInt(players[0].rockroot   ) || 0;
+    g_stats.snowthistle += parseInt(players[0].snowthistle) || 0;
+  }
 
   g_stats.gold        -= total_g;
 
@@ -329,28 +379,33 @@ function filter_craftable_c(el)
         || (has_at_least_herbs(2, 2) && has_at_least_herbs(1, 3))
       );
     } else if (has_item_98) {
-      return has_at_least_herbs(2, 2);
+      return has_at_least_herbs(2, 1);
     } else if (has_item_119) {
       return (
-        has_at_least_herbs(3, 1)
-        || (has_at_least_herbs(2, 1) && has_at_least_herbs(1, 2))
+        has_at_least_herbs(3, 1) ||
+       (has_at_least_herbs(2, 1) &&
+        has_at_least_herbs(1, 2))
       );
     }
   } finally {
-    g_stats.wood        += total_w;
-    g_stats.metal       += total_m;
-    g_stats.hide        += total_h;
-
-    g_stats.arrowvine   += total_v;
-    g_stats.axenut      += total_n;
-    g_stats.corpsecap   += total_c;
-    g_stats.flamefruit  += total_f;
-    g_stats.rockroot    += total_r;
-    g_stats.snowthistle += total_s;
-
-    g_stats.gold        += total_g;
+    g_stats = current_stats;
   }
   return true;
+}
+
+function init_player_0()
+{
+  players[0] = {};
+  players[0].wood        = 0;
+  players[0].metal       = 0;
+  players[0].hide        = 0;
+  players[0].arrowvine   = 0;
+  players[0].axenut      = 0;
+  players[0].corpsecap   = 0;
+  players[0].flamefruit  = 0;
+  players[0].rockroot    = 0;
+  players[0].snowthistle = 0;
+  players[0].gold        = 0;
 }
 
 function handle_special(el)
@@ -638,6 +693,8 @@ function create_cards(item_array)
 
   for (const item of item_array) {
 
+    // console.log(item_array);
+
     let div = document.createElement("div");
     let num = document.createElement("span");
 
@@ -694,6 +751,7 @@ function change_name(el)
   if (!new_name) {
     return;
   }
+  players[selected_player].name = new_name.trim();
   // el.firstElementChild.innerHTML = new_name.trim();
   el.innerText = new_name.trim();
   // el.replaceChild(document.createTextNode(new_name.trim()), el.firstChild);
@@ -729,9 +787,9 @@ function update_highlight(current_button)
 
 function show_player_stats(num)
 {
-  assign_player_stats(globalnum);
+  assign_player_stats(selected_player);
   // let num = Number(document.querySelector('form').elements['player'].value);
-  globalnum = num;
+  selected_player = num;
 
   if (!players[num]) {
     players[num] = {}
