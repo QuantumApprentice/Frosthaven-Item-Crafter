@@ -1,12 +1,11 @@
 "use strict";
 ///home/quantum/.wine/drive_c/Program Files/Blackmagic Design/DaVinci Resolve
-///frosthaven supplies, 
-// the owned items listing, 
-// the buttons on top of the items to add them to the owned/unlocked list, 
-// saving the different player's resources to the URL so the entire state can be saved/reloaded, 
-// including player names
 
-
+//check// frosthaven supplies, 
+//check// owned items listing, 
+// buttons on top of the items to add them to the owned/unlocked list, 
+//check// saving the different player's resources to the URL so the entire state can be saved/reloaded, 
+//check// including player names
 
 
 let players = [];
@@ -27,8 +26,9 @@ g_stats.rockroot       = 0;
 g_stats.snowthistle    = 0;
 
 g_stats.owned_items    = [];
-g_stats.unlocked_items = [];
 
+let unlocked_items = [];
+let ul             = "";
 let slot_type      = "";
 let selectedFilter = "";
 let item_data;
@@ -54,26 +54,74 @@ async function get_data()
 function parse_hash(hash)
 {
   let str_arr = hash.substring(1).split(";");
-  let final_arr = [];
 
   for (const el of str_arr) {
-    final_arr.push(el.split("="));
+    let [key, val] = el.split("=");
+    // console.log("key:val", key, val);
+
+    if (key == "ul") {
+      ul = val;
+    }
+    if (key == "fs") {
+      if (!players[0]) {
+        players[0] = {};
+      }
+
+      let resources = val.split(",");
+      players[0].gold        = parseInt(resources[0]) || 0;
+      players[0].wood        = parseInt(resources[1]) || 0;
+      players[0].metal       = parseInt(resources[2]) || 0;
+      players[0].hide        = parseInt(resources[3]) || 0;
+      players[0].arrowvine   = parseInt(resources[4]) || 0;
+      players[0].axenut      = parseInt(resources[5]) || 0;
+      players[0].corpsecap   = parseInt(resources[6]) || 0;
+      players[0].flamefruit  = parseInt(resources[7]) || 0;
+      players[0].rockroot    = parseInt(resources[8]) || 0;
+      players[0].snowthistle = parseInt(resources[9]) || 0;
+    }
+
+
+    if (key.startsWith("p")) {
+      let indx = parseInt(key.slice(1));
+      let [name, res_str, owned] = val.split(":");
+      // console.log("indx nro", decodeURIComponent(name), res_str, owned);
+
+      if (!players[indx]) {
+        players[indx] = {};
+      }
+
+      document.getElementById(key).innerText = decodeURIComponent(name);
+
+      let resources = res_str.split(",");
+
+      players[indx].wood        = resources[0];
+      players[indx].metal       = resources[1];
+      players[indx].hide        = resources[2];
+      players[indx].arrowvine   = resources[3];
+      players[indx].axenut      = resources[4];
+      players[indx].corpsecap   = resources[5];
+      players[indx].flamefruit  = resources[6];
+      players[indx].rockroot    = resources[7];
+      players[indx].snowthistle = resources[8];
+
+      players[indx].owned_items = owned;
+    }
+
   }
-  const form = document.getElementById("form");
 
-  for (const el of final_arr) {
-    let [key, val] = el;
-
-    
-
-    let formEl = form.elements[key];
-    if (!formEl) { debugger; continue; }
-
-    // console.log("key:val= ", key, ":", val);
-    formEl.value = val;
+  if (players[1]) {
+    show_player_stats(1);
+  }
+  else if (players[2]) {
+    show_player_stats(2);
+  }
+  else if (players[3]) {
+    show_player_stats(3);
+  }
+  else if (players[4]) {
+    show_player_stats(4);
   }
 
-  parse_input();
   create_hash();
 }
 
@@ -98,31 +146,77 @@ function create_hash()
 
   /* approach 3 - array joining: */
   let parts = ["#"];
-  for (let [key, value] of formData) {
-    parts.push(key);
-    parts.push('=');
-    parts.push(value);
-    parts.push(";");
-  }
-
-  // new URLSearchParams({foo: 1, bar: "xyz"}).toString()
-
-  // for (const player of players) {
-  // for (let i = 0; i <= 4; i++) {
-  //     // debugger;
-  //   parts.push("p", players[i].name);
-  //   if (!players[i]) { continue;}
-  //   for (const [key, val] of Object.entries(players[i])) {
-  //     console.log("key, val", key, val);
-  //     parts.push(key);
-  //     parts.push('=');
-  //     parts.push(val);
-  //     parts.push(";");
-  //   }
+  // for (let [key, value] of formData) {
+  //   parts.push(key);
+  //   parts.push('=');
+  //   parts.push(value);
+  //   parts.push(";");
   // }
 
 
-  parts.splice(-1,1);
+  /* create link from players variable instead of form */
+  for (let i = 0; i <= 4; i++) {
+
+    if (!players[i]) { continue; }
+
+    if (i == 0) {
+      parts.push(`fs=`);
+
+      parts.push(players[i].wood        || "");
+      parts.push(",");
+      parts.push(players[i].metal       || "");
+      parts.push(",");
+      parts.push(players[i].hide        || "");
+      parts.push(",");
+      parts.push(players[i].arrowvine   || "");
+      parts.push(",");
+      parts.push(players[i].axenut      || "");
+      parts.push(",");
+      parts.push(players[i].corpsecap   || "");
+      parts.push(",");
+      parts.push(players[i].flamefruit  || "");
+      parts.push(",");
+      parts.push(players[i].rockroot    || "");
+      parts.push(",");
+      parts.push(players[i].snowthistle || "");
+
+      parts.push(";");
+    }
+    else {
+
+      let name = document.getElementById(`p${i}`);
+      parts.push(`p${i}=`, encodeURIComponent(name.innerText || `Player ${i}`));
+      parts.push(":");
+
+      parts.push(players[i].gold        || "");
+      parts.push(",");
+      parts.push(players[i].wood        || "");
+      parts.push(",");
+      parts.push(players[i].metal       || "");
+      parts.push(",");
+      parts.push(players[i].hide        || "");
+      parts.push(",");
+      parts.push(players[i].arrowvine   || "");
+      parts.push(",");
+      parts.push(players[i].axenut      || "");
+      parts.push(",");
+      parts.push(players[i].corpsecap   || "");
+      parts.push(",");
+      parts.push(players[i].flamefruit  || "");
+      parts.push(",");
+      parts.push(players[i].rockroot    || "");
+      parts.push(",");
+      parts.push(players[i].snowthistle || "");
+
+      parts.push(":");
+      parts.push(players[i].owned_items || "");
+
+      parts.push(";")
+    }
+  }
+
+  parts.push("ul=");
+  parts.push(ul);
 
   let s = parts.join('');
 
@@ -153,8 +247,8 @@ function parse_numbers(input)
 
 function parse_input()
 {
-  let unlocked_cards_string = document.getElementById("unlocked_items").value;
-  g_stats.unlocked_items = parse_numbers(unlocked_cards_string);
+  ul = document.getElementById("unlocked_items").value;
+  unlocked_items = parse_numbers(ul);
 
   let card_nums_string = document.getElementById("owned_items").value;
   g_stats.owned_items = parse_numbers(card_nums_string);
@@ -209,7 +303,6 @@ function reset_crafting()
   parse_input();
 }
 
-
 function has_at_least_herbs(amt, min)
 {
   let total = 0;
@@ -249,6 +342,39 @@ function has_at_least_herbs(amt, min)
 // (i.e. 98 and 119) which the current handling 
 // would work fine for
 
+function init_player_0()
+{
+  players[0] = {};
+  players[0].wood        = "";
+  players[0].metal       = "";
+  players[0].hide        = "";
+  players[0].arrowvine   = "";
+  players[0].axenut      = "";
+  players[0].corpsecap   = "";
+  players[0].flamefruit  = "";
+  players[0].rockroot    = "";
+  players[0].snowthistle = "";
+  players[0].gold        = "";
+}
+
+function handle_special(el)
+{
+  if (el.number == 98) {
+    if (has_at_least_herbs(2, 1)) {
+      return true;
+    }
+  }
+  if (el.number == 119) {
+    if ((has_at_least_herbs(2, 1)) &&
+        (has_at_least_herbs(1, 2)) ||
+        (has_at_least_herbs(3, 1)))
+      {
+      return true;
+    }
+  }
+  return false;
+}
+
 function filter_craftable_c(el)
 {
   if (g_stats.owned_items.includes(el.number)) {
@@ -265,7 +391,7 @@ function filter_craftable_c(el)
   // this assumes each item is only ever in a crafting chain once
   while (items_to_craft.length > 0) {
     let item = items_to_craft.shift();
-    if (selectedFilter != "all&craft" && !g_stats.unlocked_items.includes(item.number)) {
+    if (selectedFilter != "all&craft" && !unlocked_items.includes(item.number)) {
       
       return false;
     }
@@ -297,9 +423,6 @@ function filter_craftable_c(el)
   let total_g = 0;
 
   let current_stats = {...g_stats};
-  // for (const i of g_stats) {
-  //   current_stats.i = g_stats.i;
-  // }
 
   for (let item of regular_items_to_craft) {
     total_w += item.resources.w;
@@ -359,9 +482,6 @@ function filter_craftable_c(el)
       return false;
     }
 
-    // let is_single_class_item = special_items_to_craft.size === 1 && special_items_to_craft.keys().next().value.resources.z;
-    // if (is_single_class_item) return false;
-
     let has_item_98   = special_items_to_craft.delete(item_data.items[97]);
     let has_item_119  = special_items_to_craft.delete(item_data.items[118]);
 
@@ -393,44 +513,9 @@ function filter_craftable_c(el)
   return true;
 }
 
-function init_player_0()
-{
-  players[0] = {};
-  players[0].wood        = 0;
-  players[0].metal       = 0;
-  players[0].hide        = 0;
-  players[0].arrowvine   = 0;
-  players[0].axenut      = 0;
-  players[0].corpsecap   = 0;
-  players[0].flamefruit  = 0;
-  players[0].rockroot    = 0;
-  players[0].snowthistle = 0;
-  players[0].gold        = 0;
-}
-
-function handle_special(el)
-{
-  if (el.number == 98) {
-    if (has_at_least_herbs(2, 1)) {
-      return true;
-    }
-  }
-  if (el.number == 119) {
-    if ((has_at_least_herbs(2, 1)) &&
-        (has_at_least_herbs(1, 2)) ||
-        (has_at_least_herbs(3, 1)))
-      {
-      return true;
-    }
-  }
-  return false;
-}
-
-
 function filter_craftable_b(el)
 {
   let flag = false;
-  // if (el.number === 1) debugger;
   if (el.resources["-"]) {
     handle_special(el);
   }
@@ -667,7 +752,7 @@ function filter_func(el, indx, arr)
   //unlocked items/owned items/craftable items filter
   //interesting logic crossing here
   if (selectedFilter == "unlock" || selectedFilter == "unlock&craft")
-    if (!g_stats.unlocked_items.includes(el.number)){
+    if (!unlocked_items.includes(el.number)){
     return false;
   }
   if (selectedFilter == "all&craft" || selectedFilter == "unlock&craft") {
@@ -751,10 +836,10 @@ function change_name(el)
   if (!new_name) {
     return;
   }
-  players[selected_player].name = new_name.trim();
   // el.firstElementChild.innerHTML = new_name.trim();
   el.innerText = new_name.trim();
   // el.replaceChild(document.createTextNode(new_name.trim()), el.firstChild);
+  create_hash();
 }
 
 function assign_player_stats(num)
@@ -766,6 +851,7 @@ function assign_player_stats(num)
     let [key, val] = el;
     // console.log("1key:val =>", key, ":", val);
 
+    if (val == "0") { val = ""; }
     players[num][key] = val;
   }
 
@@ -785,10 +871,14 @@ function update_highlight(current_button)
   }
 }
 
-function show_player_stats(num)
+function swap_player_stats(num)
 {
   assign_player_stats(selected_player);
-  // let num = Number(document.querySelector('form').elements['player'].value);
+  show_player_stats(num);
+}
+
+function show_player_stats(num)
+{
   selected_player = num;
 
   if (!players[num]) {
@@ -799,8 +889,9 @@ function show_player_stats(num)
   const form = document.getElementById("form");
   for (const el of Object.entries(players[num])) {
     let [key, val] = el;
-    // console.log("2key:val= ", key, ":", val);
-    form.elements[key].value = val;
+
+  //   console.log("2key:val= ", key, ":", val);
+      form.elements[key].value = val;
   }
 
   parse_input();

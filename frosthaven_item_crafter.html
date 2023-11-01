@@ -155,16 +155,16 @@
     .players button.highlight{
       border-color: #ffffff60;
     }
-    .players button.p1{
+    #p1{
       background-color: #37422B;
     }
-    .players button.p2{
+    #p2{
       background-color: #2b3d42;
     }
-    .players button.p3{
+    #p3{
       background-color: #2F2B42;
     }
-    .players button.p4{
+    #p4{
       background-color: #3E2B42;
     }
 
@@ -204,8 +204,6 @@
 
 <body>
   <div class="sidebar">
-    <!-- <span class="title">Frosthaven Supplies</span> -->
-
     <form id="form">
       <div class="players">
     <!-- //example of trying to do this with a radio instead of a button
@@ -219,31 +217,33 @@
         </label> -->
 
           <button type="button"
-            class="p0 title"
-            onclick="update_highlight(this); show_player_stats(0);"
+            class="title"
+            id="p0"
+            onclick="update_highlight(this); swap_player_stats(0);"
             >Frosthaven Supplies</button>
 
           <button type="button"
-            class="p1 highlight"
-            onclick="update_highlight(this); show_player_stats(1);"
+            class="highlight"
+            id="p1"
+            onclick="update_highlight(this); swap_player_stats(1);"
             ondblclick="change_name(this)"
             >Player 1</button>
 
           <button type="button"
-            class="p2"
-            onclick="update_highlight(this); show_player_stats(2);"
+            id="p2"
+            onclick="update_highlight(this); swap_player_stats(2);"
             ondblclick="change_name(this)"
             >Player 2</button>
 
           <button type="button"
-            class="p3"
-            onclick="update_highlight(this); show_player_stats(3);"
+            id="p3"
+            onclick="update_highlight(this); swap_player_stats(3);"
             ondblclick="change_name(this)"
             >Player 3</button>
 
           <button type="button"
-            class="p4"
-            onclick="update_highlight(this); show_player_stats(4);"
+            id="p4"
+            onclick="update_highlight(this); swap_player_stats(4);"
             ondblclick="change_name(this)"
             >Player 4</button>
       </div>
