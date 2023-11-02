@@ -13,10 +13,6 @@
     *{
       box-sizing: border-box;
     }
-
-
-
-
     .card_div{
       position: relative;
       box-shadow: 2px 2px 10px 8px #0000007a;
@@ -53,11 +49,6 @@
       margin-left: var(--sidebar-width);
       padding: 0 0 0 5px;
     }
-
-
-
-
-
     .flex_row{
       display: flex;
       flex-direction: row;
@@ -167,38 +158,6 @@
     #p4{
       background-color: #3E2B42;
     }
-
-  /*/*old highlight class for radios
-    .players button{
-      height: 35px;
-      background-color: #112;
-      position: relative;
-      cursor: pointer;
-      font-size: 22px;
-      user-select: none;
-      z-index: 0;
-    }
-     .highlight{
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 100%;
-      width: 100%;
-      z-index: -1;
-      border: 5px solid #112;
-    }
-    .players input{
-      position: absolute;
-      opacity: 0;
-      cursor: pointer;
-    }
-    .players:hover input ~ .highlight{
-      background-color: blue;
-      border: 5px solid blue;
-    }
-    .players input:checked ~ .highlight{
-      border: 5px solid #76758B;
-    } */
   </style>
 </head>
 
@@ -206,15 +165,6 @@
   <div class="sidebar">
     <form id="form">
       <div class="players">
-    <!-- //example of trying to do this with a radio instead of a button
-        <label class="players" ondblclick="change_name(this)">
-          <span>Player 2</span>
-          <input type="radio" 
-            name="player" 
-            value="1"
-            onchange="update_highlight(this); show_player_stats();">
-          <span class="highlight"></span>
-        </label> -->
 
           <button type="button"
             class="title"
@@ -377,7 +327,6 @@
     </div>
   </div>
 
-
   <div>
     <div class="header">
       <div>
@@ -405,7 +354,6 @@
         </select>
       </div>
     </div>
-
 
     <div id="card_display" class="card_display">
     </div>
