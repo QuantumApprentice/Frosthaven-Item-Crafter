@@ -1,16 +1,20 @@
 "use strict";
 ///home/quantum/.wine/drive_c/Program Files/Blackmagic Design/DaVinci Resolve
 
-//check// frosthaven supplies, 
-//check// owned items listing, 
+//done// frosthaven supplies, 
+//done// owned items listing, 
+//done// saving the different player's resources to the URL so the entire state can be saved/reloaded, 
+//done// including player names
+//done// unlocked items not universal yet
+//done// need to parse out the "," commas for the url
 // buttons on top of the items to add them to the owned/unlocked list, 
-//check// saving the different player's resources to the URL so the entire state can be saved/reloaded, 
-//check// including player names
 
+addEventListener("hashchange", ()=>parse_hash(location.hash))
 
 let players = [];
 let selected_player = 1;
 let g_stats = {};
+let global_hash = "";
 
 g_stats.gold           = 0;
 
@@ -32,6 +36,7 @@ let ul             = "";
 let slot_type      = "";
 let selectedFilter = "";
 let item_data;
+
 get_data();
 async function get_data()
 {
@@ -46,13 +51,18 @@ async function get_data()
 
   if (location.hash) {
     let hash = location.hash;
+    // console.log("test?");
     parse_hash(hash);
   }
-
 }
+
+
 
 function parse_hash(hash)
 {
+  if (hash == global_hash) { return; }
+  global_hash = hash;
+
   let str_arr = hash.substring(1).split(";");
 
   for (const el of str_arr) {
@@ -60,24 +70,18 @@ function parse_hash(hash)
     // console.log("key:val", key, val);
 
     if (key == "ul") {
+      // console.log(key, val);
       ul = val;
+      unlocked_items = parse_numbers(val);
+      document.getElementById("unlocked_items").value = val;
     }
+
     if (key == "fs") {
       if (!players[0]) {
         players[0] = {};
       }
 
-      let resources = val.split(",");
-      players[0].gold        = parseInt(resources[0]) || 0;
-      players[0].wood        = parseInt(resources[1]) || 0;
-      players[0].metal       = parseInt(resources[2]) || 0;
-      players[0].hide        = parseInt(resources[3]) || 0;
-      players[0].arrowvine   = parseInt(resources[4]) || 0;
-      players[0].axenut      = parseInt(resources[5]) || 0;
-      players[0].corpsecap   = parseInt(resources[6]) || 0;
-      players[0].flamefruit  = parseInt(resources[7]) || 0;
-      players[0].rockroot    = parseInt(resources[8]) || 0;
-      players[0].snowthistle = parseInt(resources[9]) || 0;
+      string_to_resources(players[0], val, true);
     }
 
 
@@ -92,37 +96,57 @@ function parse_hash(hash)
 
       document.getElementById(key).innerText = decodeURIComponent(name);
 
-      let resources = res_str.split(",");
-
-      players[indx].wood        = resources[0];
-      players[indx].metal       = resources[1];
-      players[indx].hide        = resources[2];
-      players[indx].arrowvine   = resources[3];
-      players[indx].axenut      = resources[4];
-      players[indx].corpsecap   = resources[5];
-      players[indx].flamefruit  = resources[6];
-      players[indx].rockroot    = resources[7];
-      players[indx].snowthistle = resources[8];
+      string_to_resources(players[indx], res_str);
 
       players[indx].owned_items = owned;
     }
 
   }
+  show_player_stats(selected_player);
+}
 
-  if (players[1]) {
-    show_player_stats(1);
+function string_to_resources(player, str, fh_supplies = false)
+{
+  let resource_string_parts = str.split(",");
+  let idx = 0;
+  if (!fh_supplies) {
+    player.gold      = resource_string_parts[idx++] || "";
   }
-  else if (players[2]) {
-    show_player_stats(2);
-  }
-  else if (players[3]) {
-    show_player_stats(3);
-  }
-  else if (players[4]) {
-    show_player_stats(4);
+  player.wood        = resource_string_parts[idx++] || "";
+  player.metal       = resource_string_parts[idx++] || "";
+  player.hide        = resource_string_parts[idx++] || "";
+  player.arrowvine   = resource_string_parts[idx++] || "";
+  player.axenut      = resource_string_parts[idx++] || "";
+  player.corpsecap   = resource_string_parts[idx++] || "";
+  player.flamefruit  = resource_string_parts[idx++] || "";
+  player.rockroot    = resource_string_parts[idx++] || "";
+  player.snowthistle = resource_string_parts[idx++] || "";
+}
+
+function resources_to_string(player, skipGold = false)
+{
+  let resource_string_parts = [];
+
+  if (!skipGold) {
+    resource_string_parts.push(player.gold      || "");
   }
 
-  create_hash();
+  resource_string_parts.push(player.wood        || "");
+  resource_string_parts.push(player.metal       || "");
+  resource_string_parts.push(player.hide        || "");
+  resource_string_parts.push(player.arrowvine   || "");
+  resource_string_parts.push(player.axenut      || "");
+  resource_string_parts.push(player.corpsecap   || "");
+  resource_string_parts.push(player.flamefruit  || "");
+  resource_string_parts.push(player.rockroot    || "");
+  resource_string_parts.push(player.snowthistle || "");
+
+  let last_non_empty_index = resource_string_parts.findLastIndex(s=>s);
+  resource_string_parts = resource_string_parts.slice(0, last_non_empty_index + 1);
+
+  let out = resource_string_parts.join(",");
+  return out;
+
 }
 
 function create_hash()
@@ -130,29 +154,7 @@ function create_hash()
   const form = document.getElementById("form");
   const formData = new FormData(form);
 
-  // /* approach 1 - functional: */ 
-  // let s = Array.from(formData).map(
-  //   kvPair => kvPair.join('=')
-  //   ).join(';');
-
-  // /* approach 2 - string concatenation: */
-  // let s = '';
-  // for (let [key, value] of formData) {
-  //   // if (s.length) { s += ';'; }
-  //   s += `${key}=${value};`;
-  // }
-  // s = s.slice(0,-1);
-  // console.log("s: ", s);
-
-  /* approach 3 - array joining: */
   let parts = ["#"];
-  // for (let [key, value] of formData) {
-  //   parts.push(key);
-  //   parts.push('=');
-  //   parts.push(value);
-  //   parts.push(";");
-  // }
-
 
   /* create link from players variable instead of form */
   for (let i = 0; i <= 4; i++) {
@@ -160,25 +162,12 @@ function create_hash()
     if (!players[i]) { continue; }
 
     if (i == 0) {
-      parts.push(`fs=`);
 
-      parts.push(players[i].wood        || "");
-      parts.push(",");
-      parts.push(players[i].metal       || "");
-      parts.push(",");
-      parts.push(players[i].hide        || "");
-      parts.push(",");
-      parts.push(players[i].arrowvine   || "");
-      parts.push(",");
-      parts.push(players[i].axenut      || "");
-      parts.push(",");
-      parts.push(players[i].corpsecap   || "");
-      parts.push(",");
-      parts.push(players[i].flamefruit  || "");
-      parts.push(",");
-      parts.push(players[i].rockroot    || "");
-      parts.push(",");
-      parts.push(players[i].snowthistle || "");
+      let str = resources_to_string(players[i], true);
+      if (str) {
+        parts.push(`fs=`);
+        parts.push(str);
+      }
 
       parts.push(";");
     }
@@ -188,25 +177,8 @@ function create_hash()
       parts.push(`p${i}=`, encodeURIComponent(name.innerText || `Player ${i}`));
       parts.push(":");
 
-      parts.push(players[i].gold        || "");
-      parts.push(",");
-      parts.push(players[i].wood        || "");
-      parts.push(",");
-      parts.push(players[i].metal       || "");
-      parts.push(",");
-      parts.push(players[i].hide        || "");
-      parts.push(",");
-      parts.push(players[i].arrowvine   || "");
-      parts.push(",");
-      parts.push(players[i].axenut      || "");
-      parts.push(",");
-      parts.push(players[i].corpsecap   || "");
-      parts.push(",");
-      parts.push(players[i].flamefruit  || "");
-      parts.push(",");
-      parts.push(players[i].rockroot    || "");
-      parts.push(",");
-      parts.push(players[i].snowthistle || "");
+      let str = resources_to_string(players[i]);
+      parts.push(str);
 
       parts.push(":");
       parts.push(players[i].owned_items || "");
@@ -247,14 +219,18 @@ function parse_numbers(input)
 
 function parse_input()
 {
-  ul = document.getElementById("unlocked_items").value;
-  unlocked_items = parse_numbers(ul);
+
+  // debugger
+  if (ul != document.getElementById("unlocked_items").value) {
+    ul = document.getElementById("unlocked_items").value;
+    unlocked_items = parse_numbers(ul);
+  }
 
   let card_nums_string = document.getElementById("owned_items").value;
   g_stats.owned_items = parse_numbers(card_nums_string);
 
-  slot_type      = document.getElementById("slot_filter" ).value;
-  selectedFilter = document.getElementById("locked_input").value;
+  slot_type           = document.getElementById("slot_filter" ).value;
+  selectedFilter      = document.getElementById("locked_input").value;
 
   g_stats.gold        = document.getElementById("gold"       ).valueAsNumber || 0;
 
@@ -391,7 +367,7 @@ function filter_craftable_c(el)
   // this assumes each item is only ever in a crafting chain once
   while (items_to_craft.length > 0) {
     let item = items_to_craft.shift();
-    if (selectedFilter != "all&craft" && !unlocked_items.includes(item.number)) {
+    if (selectedFilter != "all_craft" && !unlocked_items.includes(item.number)) {
       
       return false;
     }
@@ -513,203 +489,6 @@ function filter_craftable_c(el)
   return true;
 }
 
-function filter_craftable_b(el)
-{
-  let flag = false;
-  if (el.resources["-"]) {
-    handle_special(el);
-  }
-  else {
-    if (el.resources.i.length > 0) {
-      let current_req = {};
-      current_req.w = 0;
-      current_req.m = 0;
-      current_req.h = 0;
-
-      current_req.v = 0;
-      current_req.n = 0;
-      current_req.c = 0;
-      current_req.f = 0;
-      current_req.r = 0;
-      current_req.s = 0;
-
-      current_req.g = 0;
-
-      for (const item_num of el.resources.i) {
-        let current_item = item_data.items[item_num-1];
-        if (!owned_items.includes(item_num)) {
-          current_req.w += current_item.resources.w;
-          current_req.m += current_item.resources.m;
-          current_req.h += current_item.resources.h;
-
-          current_req.v += current_item.resources.v;
-          current_req.n += current_item.resources.n;
-          current_req.c += current_item.resources.c;
-          current_req.f += current_item.resources.f;
-          current_req.r += current_item.resources.r;
-          current_req.s += current_item.resources.s;
-
-          current_req.g += current_item.resources.g;
-        }
-      }
-      if (
-        current_req.w <= g_stats.wood        &&
-        current_req.m <= g_stats.metal       &&
-        current_req.h <= g_stats.hide        &&
-        current_req.v <= g_stats.arrowvine   &&
-        current_req.n <= g_stats.axenut      &&
-        current_req.c <= g_stats.corpsecap   &&
-        current_req.f <= g_stats.flamefruit  &&
-        current_req.r <= g_stats.rockroot    &&
-        current_req.s <= g_stats.snowthistle &&
-        current_req.g <= g_stats.gold
-      ) {
-        flag = true;
-      }
-    } else {
-      flag = true;
-    }
-
-    if (flag == true) {
-      if (//required        inventory
-        el.resources.w <= g_stats.wood        &&
-        el.resources.m <= g_stats.metal       &&
-        el.resources.h <= g_stats.hide        &&
-
-        el.resources.v <= g_stats.arrowvine   &&
-        el.resources.n <= g_stats.axenut      &&
-        el.resources.c <= g_stats.corpsecap   &&
-        el.resources.f <= g_stats.flamefruit  &&
-        el.resources.r <= g_stats.rockroot    &&
-        el.resources.s <= g_stats.snowthistle &&
-
-        el.resources.g <= g_stats.gold
-        ) {
-          return true;
-        }
-        return false;
-    }
-    else {
-      return false;
-    }
-  }
-}
-
-function filter_craftable(el)
-{
-  // if (el.number === 1) debugger;
-  if (el.resources["-"]) {
-
-    if (el.number == 98) {
-      if (has_at_least_herbs(2, 1)) {
-        return true;
-      }
-    }
-    if (el.number == 119) {
-      if ((has_at_least_herbs(2, 1)) &&
-          (has_at_least_herbs(1, 2)) ||
-          (has_at_least_herbs(3, 1)))
-       {
-        return true;
-      }
-    }
-    return false;
-  }
-  else
-  if (//required        inventory
-      el.resources.w <= g_stats.wood        &&
-      el.resources.m <= g_stats.metal       &&
-      el.resources.h <= g_stats.hide        &&
-
-      el.resources.v <= g_stats.arrowvine   &&
-      el.resources.n <= g_stats.axenut      &&
-      el.resources.c <= g_stats.corpsecap   &&
-      el.resources.f <= g_stats.flamefruit  &&
-      el.resources.r <= g_stats.rockroot    &&
-      el.resources.s <= g_stats.snowthistle &&
-
-      el.resources.g <= g_stats.gold
-      ) {
-        if (el.resources.i.length > 0) {
-            g_stats.wood        -= el.resources.w;
-            g_stats.metal       -= el.resources.m;
-            g_stats.hide        -= el.resources.h;
-
-            g_stats.arrowvine   -= el.resources.v;
-            g_stats.axenut      -= el.resources.n;
-            g_stats.corpsecap   -= el.resources.c;
-            g_stats.flamefruit  -= el.resources.f;
-            g_stats.rockroot    -= el.resources.r;
-            g_stats.snowthistle -= el.resources.s;
-          try {
-            for (const item_num of el.resources.i) {
-
-                if (el.resources.i.length > 1) {
-          // debugger;
-                  for (const item_num2 of el.resources.i) {
-                    if (item_num == item_num2) {continue;}
-
-                    if (!owned_items.includes(item_num2)) {
-                      let current = item_data.items[item_num2-1];
-
-                      g_stats.wood        -= current.resources.w;
-                      g_stats.metal       -= current.resources.m;
-                      g_stats.hide        -= current.resources.h;
-
-                      g_stats.arrowvine   -= current.resources.v;
-                      g_stats.axenut      -= current.resources.n;
-                      g_stats.corpsecap   -= current.resources.c;
-                      g_stats.flamefruit  -= current.resources.f;
-                      g_stats.rockroot    -= current.resources.r;
-                      g_stats.snowthistle -= current.resources.s;
-                    }
-                  }
-                  try {
-                    if (!owned_items.includes(item_num)) {
-                      if (!filter_craftable(item_data.items[item_num-1])) {
-                        return false;
-                      }
-                    }
-                  }
-                  finally {
-                    for (const item_num2 of el.resources.i) {
-                      if (item_num == item_num2) {continue;}
-
-                      g_stats.wood        += item_data.items[item_num2-1].resources.w;
-                      g_stats.metal       += item_data.items[item_num2-1].resources.m;
-                      g_stats.hide        += item_data.items[item_num2-1].resources.h;
-
-                      g_stats.arrowvine   += item_data.items[item_num2-1].resources.v;
-                      g_stats.axenut      += item_data.items[item_num2-1].resources.n;
-                      g_stats.corpsecap   += item_data.items[item_num2-1].resources.c;
-                      g_stats.flamefruit  += item_data.items[item_num2-1].resources.f;
-                      g_stats.rockroot    += item_data.items[item_num2-1].resources.r;
-                      g_stats.snowthistle += item_data.items[item_num2-1].resources.s;
-                    }
-                  }
-
-                }
-
-            }
-          }
-          finally {
-            g_stats.wood        += el.resources.w;
-            g_stats.metal       += el.resources.m;
-            g_stats.hide        += el.resources.h;
-
-            g_stats.arrowvine   += el.resources.v;
-            g_stats.axenut      += el.resources.n;
-            g_stats.corpsecap   += el.resources.c;
-            g_stats.flamefruit  += el.resources.f;
-            g_stats.rockroot    += el.resources.r;
-            g_stats.snowthistle += el.resources.s;
-          }
-        }
-        return true;
-      }
-      return false;
-}
-
 function parse_cost(item)
 {
   let cost_array = item.cost.split(",");
@@ -751,11 +530,11 @@ function filter_func(el, indx, arr)
 
   //unlocked items/owned items/craftable items filter
   //interesting logic crossing here
-  if (selectedFilter == "unlock" || selectedFilter == "unlock&craft")
+  if (selectedFilter == "unlock" || selectedFilter == "unlock_craft")
     if (!unlocked_items.includes(el.number)){
     return false;
   }
-  if (selectedFilter == "all&craft" || selectedFilter == "unlock&craft") {
+  if (selectedFilter == "all_craft" || selectedFilter == "unlock_craft") {
     if (!filter_craftable_c(el)) {
       return false;
     }
@@ -854,17 +633,10 @@ function assign_player_stats(num)
     if (val == "0") { val = ""; }
     players[num][key] = val;
   }
-
 }
 
 function update_highlight(current_button)
 {
-  ////normal way of doing this
-  // for (const otherButtons of current_button.parentElement.querySelectorAll('button')) {
-  //   otherButtons.classList.remove("highlight");
-  // }
-  // el.classList.add("highlight");
-
   //toggle way of doing this
   for (const button of current_button.parentElement.querySelectorAll('button')) {
     button.classList.toggle("highlight", button === current_button);
@@ -882,15 +654,14 @@ function show_player_stats(num)
   selected_player = num;
 
   if (!players[num]) {
-    players[num] = {}
+    players[num] = {};
     reset_crafting();
   }
 
   const form = document.getElementById("form");
   for (const el of Object.entries(players[num])) {
     let [key, val] = el;
-
-  //   console.log("2key:val= ", key, ":", val);
+    // console.log("2key:val= ", key, ":", val);
       form.elements[key].value = val;
   }
 

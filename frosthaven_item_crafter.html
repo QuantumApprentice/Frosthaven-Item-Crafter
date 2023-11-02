@@ -254,12 +254,11 @@
             <label>
               <img src="./icons/r-gold.png" alt="Gold" class="icon">
               <input type="number"
-              style="width: 125px;"
-              onblur="parse_input()"
-              min="0"
-              name="gold"
-              id="gold"
-              >
+                style="width: 125px;"
+                onblur="parse_input()"
+                min="0"
+                name="gold"
+                id="gold">
             </label>
           </div>
         </div>
@@ -355,26 +354,24 @@
               id="owned_items">
           </label>
         </div>
-        <div>
-          <label>Unlocked Items
-            <input type="text"
-              name="unlocked_items"
-              onblur="parse_input()"
-              id="unlocked_items">
-          </label>
-        </div>
       </div>
-
     </form>
+
+    <div class="items">
+      <label>Unlocked Items
+        <input type="text"
+          onblur="parse_input()"
+          id="unlocked_items">
+      </label>
+    </div>
+
     <div class="flex_row">
       <button class="random_buttons"
         onclick="create_link()">
         Copy Link
       </button>
-      <button class="random_buttons"
-        onclick="reset_crafting()"
-        class="dev_tools"
-        id="dev_tools_reset_crafting">
+      <button class="random_buttons dev_tools"
+        onclick="reset_crafting()">
         Reset
       </button>
     </div>
@@ -387,11 +384,11 @@
         <select onchange="parse_input()"
           name="locked_input"
           id="locked_input">
-          <option value="unlock"      >Unlocked Only       </option>
-          <option value="unlock&craft">Unlocked & Craftable</option>
-          <option value="owned"       >Owned Items         </option>
-          <option value="all"         >All Items           </option>
-          <option value="all&craft"   >All Craftable Items </option>
+          <option value="unlock"      >Unlocked Only           </option>
+          <option value="unlock_craft">Unlocked &amp; Craftable</option>
+          <option value="owned"       >Owned Items             </option>
+          <option value="all"         >All Items               </option>
+          <option value="all_craft"   >All Craftable Items     </option>
         </select>
       </div>
       <div>
