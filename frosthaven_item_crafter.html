@@ -98,15 +98,6 @@
       font-size: 30px;
       text-align: center;
     }
-    .title{
-      display: block;
-      border-color: #A58A89;
-      background-color: #422B2B;
-      font-size: 25px;
-      margin: 0 -5px;
-      padding: 10px;
-      text-align: center;
-    }
     .random_buttons{
       font-size: 25px;
       border-radius: 10px;
@@ -146,6 +137,9 @@
     .players button.highlight{
       border-color: #ffffff60;
     }
+    #p0{
+      background-color: #422B2B;
+    }
     #p1{
       background-color: #37422B;
     }
@@ -167,7 +161,6 @@
       <div class="players">
 
           <button type="button"
-            class="title"
             id="p0"
             onclick="update_highlight(this); swap_player_stats(0);"
             >Frosthaven Supplies</button>
