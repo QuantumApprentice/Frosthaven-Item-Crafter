@@ -33,15 +33,17 @@
       left: 100%;
     }
     .card_number{
-      font-size: 20px;
+      font-size: 16px;
       position: absolute;
-      top: -10px;
-      left: -10px;
-      text-align: left;
-      border: 3px solid #363636;
-      border-radius: 90px;
-      background-color: #506aff;
-      width: fit-content;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      padding-left: 6px;
+      color: #000;
+      background: url('./icons/r-item.png');
+      top: 8%;
     }
     .card_display {
       display: flex;
@@ -178,7 +180,7 @@
       #sidebar_collapser {
         display: flex;
         gap: 10px;
-        text-align: center;
+        align-items: center;
         justify-content: center;
         width: 100%;
         margin: 0 0;
@@ -222,7 +224,8 @@
         font-size: 14px;
       }
       .card_number {
-        font-size: 14px;
+        transform: scale(80%);
+        transform-origin: top left;
       }
     }
   </style>
