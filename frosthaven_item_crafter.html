@@ -48,11 +48,11 @@
       gap: 44px;
       padding: 10px 30px 20px 20px;
     }
-    .flex_row{
+    .resources > div, .flex_row {
       display: flex;
       flex-direction: row;
       justify-content: space-between;
-      margin: 20px 0;
+      margin: 12px 0;
     }
     body{
       background: #112;
@@ -63,7 +63,7 @@
     }
     .sidebar{
       width: var(--sidebar-width);
-      border-right: 5px solid #DCCD9F;
+      border-right: 4px solid #DCCD9F;
       background-color: #282213;
       position: fixed;
       inset: 0 auto 0 0;
@@ -193,21 +193,19 @@
       </div>
 
       <div class="resources">
-        <div class="flex_row">
-          <div>
-            <label>
-              <img src="./icons/r-gold.png" alt="Gold" class="icon">
-              <input type="number"
-                style="width: 125px;"
-                onblur="parse_input()"
-                min="0"
-                name="gold"
-                id="gold">
-            </label>
-          </div>
+        <div>
+          <label>
+            <img src="./icons/r-gold.png" alt="Gold" class="icon">
+            <input type="number"
+              style="width: 125px;"
+              onblur="parse_input()"
+              min="0"
+              name="gold"
+              id="gold">
+          </label>
         </div>
 
-        <div class="flex_row">
+        <div>
           <label>
             <img src="./icons/r-wood.png" alt="Wood" class="icon">
             <input type="number"
@@ -234,7 +232,7 @@
           </label>
         </div>
 
-        <div class="flex_row">
+        <div>
           <label>
             <img src="./icons/r-arrowvine.png" alt="Arrowvine" class="icon">
             <input type="number"
@@ -261,7 +259,7 @@
           </label>
         </div>
 
-        <div class="flex_row">
+        <div>
           <label>
             <img src="./icons/r-flamefruit.png" alt="Flamefruit" class="icon">
             <input type="number"
