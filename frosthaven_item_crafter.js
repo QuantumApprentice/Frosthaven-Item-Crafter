@@ -586,7 +586,6 @@ function create_cards(item_array)
     };
 
     card_front.src="./item-images/" + item.file;
-    card_front.className="card_front";
     div.append(card_button);
 
     if (item.usage == "f") {

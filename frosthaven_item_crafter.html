@@ -16,22 +16,23 @@
     .card_div {
       position: relative;
     }
-    .card_div button{
-      border:0;
+    .card_div, .card_div *  {
+      display: inline-flex;
+      border-radius: 8px;
+      border: 0;
+      padding: 0;
     }
-    .card_front{
-      border-radius: 4px;
+    .card_div img {
       height: var(--card-height);
+      width: auto;
     }
     .card_back{
       position: absolute;
-      inset: 5px auto 5px calc(100% - 4px);
-      height: var(--card-height);
-      width: auto;
-      border: 5px yellow;
+      top: 5px;
+      left: 100%;
     }
     .card_number{
-      font-size: larger;
+      font-size: 20px;
       position: absolute;
       top: -10px;
       left: -10px;
