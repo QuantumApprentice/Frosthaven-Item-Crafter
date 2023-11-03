@@ -616,12 +616,12 @@ function create_link()
 
 function change_name(el)
 {
-  let new_name = window.prompt("Enter player name.", el.textContent.trim());
+  let new_name = window.prompt("Enter player name.", el.textContent.trim())?.trim();
   if (!new_name) {
     return;
   }
   // el.firstElementChild.innerHTML = new_name.trim();
-  el.innerText = new_name.trim();
+  el.innerText = new_name;
   // el.replaceChild(document.createTextNode(new_name.trim()), el.firstChild);
   create_hash();
 }
