@@ -54,6 +54,12 @@ async function load()
     // console.log("test?");
     parse_hash(hash);
   }
+
+  if (!ul) {
+    // show all items by default if nothing is unlocked
+    document.getElementById('locked_input').value = 'all';
+    parse_input();
+  }
 }
 
 
