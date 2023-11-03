@@ -37,8 +37,8 @@ let slot_type      = "";
 let selectedFilter = "";
 let item_data;
 
-get_data();
-async function get_data()
+window.addEventListener('load', load);
+async function load()
 {
   if (item_data) { return item_data; }
   let item_data_json = await fetch("./assets/item-data.json");
