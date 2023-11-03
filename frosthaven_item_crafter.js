@@ -41,7 +41,7 @@ get_data();
 async function get_data()
 {
   if (item_data) { return item_data; }
-  let item_data_json = await fetch("./item-data.json");
+  let item_data_json = await fetch("./assets/item-data.json");
   item_data = await item_data_json.json();
 
   for (const el of item_data.items) {
@@ -585,15 +585,15 @@ function create_cards(item_array)
       event.target.dataset.otherFake = currentSide;
     };
 
-    card_front.src="./item-images/" + item.file;
+    card_front.src="./assets/item-images/" + item.file;
     div.append(card_button);
 
     if (item.usage == "f") {
-      card_front.dataset.otherSide = './item-images/'+item.file_back;
-      card_front.dataset.otherFake = './icons-slots/fake-card-front.png';
+      card_front.dataset.otherSide = './assets/item-images/'+item.file_back;
+      card_front.dataset.otherFake = './assets/fake-card-front.png';
 
       let card_back = document.createElement("img");
-      card_back.src="./icons-slots/fake-card-back.png";
+      card_back.src="./assets/fake-card-back.png";
       card_back.className="card_back";
       div.append(card_back);
     }
