@@ -32,7 +32,6 @@ g_stats.snowthistle    = 0;
 g_stats.owned_items    = [];
 
 let unlocked_items = [];
-let ul             = "";
 let slot_type      = "";
 let selectedFilter = "";
 let item_data;
@@ -55,7 +54,7 @@ async function load()
     parse_hash(hash);
   }
 
-  if (!ul) {
+  if (!document.getElementById("unlocked_items").value) {
     // show all items by default if nothing is unlocked
     document.getElementById('locked_input').value = 'all';
     parse_input();
@@ -77,9 +76,8 @@ function parse_hash(hash)
 
     if (key == "ul") {
       // console.log(key, val);
-      ul = val;
-      unlocked_items = parse_numbers(val);
       document.getElementById("unlocked_items").value = val;
+      unlocked_items = parse_numbers(val);
     }
 
     if (key == "fs") {
@@ -194,7 +192,7 @@ function create_hash()
   }
 
   parts.push("ul=");
-  parts.push(ul);
+  parts.push(document.getElementById("unlocked_items").value);
 
   let s = parts.join('');
   global_hash = s;
@@ -227,10 +225,7 @@ function parse_input()
 {
 
   // debugger
-  if (ul != document.getElementById("unlocked_items").value) {
-    ul = document.getElementById("unlocked_items").value;
-    unlocked_items = parse_numbers(ul);
-  }
+  unlocked_items = parse_numbers(document.getElementById("unlocked_items").value);
 
   let card_nums_string = document.getElementById("owned_items").value;
   g_stats.owned_items = parse_numbers(card_nums_string);
