@@ -9,6 +9,7 @@
     :root{
       --sidebar-width: 350px;
       --card-height:   360px;
+      --card-gap:      44px;
     }
     *{
       box-sizing: border-box;
@@ -46,7 +47,7 @@
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 44px;
+      gap: var(--card-gap);
       padding: 10px 30px 20px 20px;
     }
     .resources > div, .flex_row {
@@ -62,7 +63,7 @@
       margin: 0;
       padding: 0;
     }
-    .sidebar{
+    #sidebar{
       width: var(--sidebar-width);
       border-right: 4px solid #DCCD9F;
       background-color: #282213;
@@ -85,6 +86,7 @@
       position: sticky;
       z-index: 1;
       padding: 20px;
+      margin: 0 -8px;
     }
     input, select, button{
       background-color: #112;
@@ -123,7 +125,7 @@
       appearance: auto;
     }
 
-    .players{
+    .pull-to-sidebar-edge {
       margin: 0 -5px;
     }
     .players button{
@@ -154,13 +156,85 @@
     #p4{
       background-color: #3E2B42;
     }
+    #sidebar_collapser, #sidebar_expander {
+      display: none;
+    }
+    @media screen and (max-width: 1000px) {
+      :root {
+        --card-height: 210px;
+        --card-gap: 22px;
+      }
+      main {
+        margin-left: 0;
+      }
+      #sidebar {
+        z-index: 10;
+        transition: margin-left 0.2s ease-in-out;
+        margin-left: calc(-1 * var(--sidebar-width));
+      }
+      #sidebar.expanded {
+        margin-left: 0;
+      }
+      #sidebar_collapser {
+        display: flex;
+        gap: 10px;
+        text-align: center;
+        justify-content: center;
+        width: 100%;
+        margin: 0 0;
+        padding: 10px;
+        font-size: 16px;
+        border: 0;
+      }
+      #sidebar_collapser span {
+        display: inline-block;
+        height: 0;
+        border-top: 12px solid transparent;
+        border-bottom: 12px solid transparent;
+        border-left: 12px solid transparent;
+        border-right: 12px solid #fff;
+      }
+      #sidebar_expander {
+        display: inline-block;
+        position: absolute;
+        padding: 0;
+        height: 0;
+        left: 10px;
+        background: transparent;
+      }
+      #sidebar_expander {
+        display: inline-block;
+        background: transparent;
+        padding: 0;
+        height: 0;
+        position: absolute;
+        left: 10px;
+        border-top: 12px solid transparent;
+        border-bottom: 12px solid transparent;
+        border-right: 12px solid transparent;
+        border-left: 12px solid #fff;
+      }
+      .header {
+        padding: 10px;
+        gap: 10px;
+      }
+      .header select {
+        font-size: 14px;
+      }
+      .card_number {
+        font-size: 14px;
+      }
+    }
   </style>
 </head>
 
 <body>
-  <div class="sidebar">
+  <div id="sidebar">
+    <div class="pull-to-sidebar-edge">
+      <button id="sidebar_collapser" type="button" onclick="sidebar_toggle();"><span></span>Close</button>
+    </div>
     <form id="form">
-      <div class="players">
+      <div class="players pull-to-sidebar-edge">
 
           <button type="button"
             id="p0"
@@ -322,6 +396,7 @@
 
   <main>
     <div class="header">
+      <button id="sidebar_expander" type="button" onclick="sidebar_toggle();"></button>
       <div>
         <select onchange="parse_input()"
           name="locked_input"

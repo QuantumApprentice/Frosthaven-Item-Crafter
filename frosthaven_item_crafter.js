@@ -667,3 +667,7 @@ function show_player_stats(num)
   parse_input();
 
 }
+
+function sidebar_toggle() {
+  document.getElementById('sidebar').classList.toggle('expanded');
+}
