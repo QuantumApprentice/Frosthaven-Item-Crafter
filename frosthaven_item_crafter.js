@@ -90,7 +90,7 @@ function parse_hash(hash)
 
 
     if (key.startsWith("p")) {
-      let indx = parseInt(key.slice(1));
+      let indx = parseInt(key.slice(1), 10);
       let [name, res_str, owned] = val.split(":");
       // console.log("indx nro", decodeURIComponent(name), res_str, owned);
 
@@ -208,14 +208,14 @@ function parse_numbers(input)
     let range_array = card_range.split("-");
 
     if (range_array.length > 1) {
-      let begin = parseInt(range_array[0]);
-      let end = parseInt(range_array[1]);
+      let begin = parseInt(range_array[0], 10);
+      let end = parseInt(range_array[1], 10);
       for (let i = begin; i <= end; i++) {
         storage_arr.push(i);
       }
     }
     else {
-      storage_arr.push(parseInt(card_range));
+      storage_arr.push(parseInt(card_range, 10));
     }
   }
   return storage_arr;
@@ -431,12 +431,12 @@ function filter_craftable_c(el)
     if (!players[0]) {
       init_player_0();
     }
-    g_stats.arrowvine   += parseInt(players[0].arrowvine  ) || 0;
-    g_stats.axenut      += parseInt(players[0].axenut     ) || 0;
-    g_stats.corpsecap   += parseInt(players[0].corpsecap  ) || 0;
-    g_stats.flamefruit  += parseInt(players[0].flamefruit ) || 0;
-    g_stats.rockroot    += parseInt(players[0].rockroot   ) || 0;
-    g_stats.snowthistle += parseInt(players[0].snowthistle) || 0;
+    g_stats.arrowvine   += parseInt(players[0].arrowvine,   10) || 0;
+    g_stats.axenut      += parseInt(players[0].axenut,      10) || 0;
+    g_stats.corpsecap   += parseInt(players[0].corpsecap,   10) || 0;
+    g_stats.flamefruit  += parseInt(players[0].flamefruit,  10) || 0;
+    g_stats.rockroot    += parseInt(players[0].rockroot,    10) || 0;
+    g_stats.snowthistle += parseInt(players[0].snowthistle, 10) || 0;
   }
 
   g_stats.gold        -= total_g;
@@ -511,7 +511,7 @@ function parse_cost(item)
 
   for (const el of cost_array) {
     let resource = el.substring(0,1);
-    let amount = parseInt(el.substring(1)) || 1;
+    let amount = parseInt(el.substring(1), 10) || 1;
 
     if (resource == "i") {
       item.resources.i.push(amount);
