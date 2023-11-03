@@ -572,7 +572,7 @@ function create_cards(item_array)
     card_front = document.createElement("img");
     card_button.append(card_front);
 
-    // Swap front and back button
+    // "Swap front and back" button
     card_button.onclick=function (event) {
       let backSide=event.target.dataset.otherSide;
       let currentSide = event.target.src;
@@ -615,9 +615,7 @@ function change_name(el)
   if (!new_name) {
     return;
   }
-  // el.firstElementChild.innerHTML = new_name.trim();
   el.innerText = new_name.trim();
-  // el.replaceChild(document.createTextNode(new_name.trim()), el.firstChild);
   create_hash();
 }
 
