@@ -197,7 +197,7 @@ function create_hash()
   parts.push(ul);
 
   let s = parts.join('');
-
+  global_hash = s;
   return s;
 }
 
