@@ -549,6 +549,31 @@ function filter_func(el, indx, arr)
   return true;
 }
 
+function create_item_card_div(item) {
+  let div = document.createElement('div');
+  div.className="card_div";
+  let html = `<span class="card_number">${item.number}</span>`;
+  html += `<button onclick="onItemCardClick(this)"><img class="card_front" src="./assets/item-images/${item.file}"></button>`;
+  if (item.usage == 'f') {
+    div.dataset.otherSide = `./assets/item-images/${item.file_back}`;
+    html += `<img class="card_back" src="./assets/fake-card-back.png">`
+  }
+  div.innerHTML = html;
+  return div;
+}
+
+function onItemCardClick(buttonEl) {
+  let div = buttonEl.closest(".card_div");
+  let backSide=div.dataset.otherSide;
+  if (!backSide) return;
+  let frontImg = div.querySelector('.card_front');
+  let backImg = div.querySelector('.card_back');
+  let currentSide = frontImg.src;
+  frontImg.src = backSide;
+  div.dataset.otherSide = currentSide;
+  backImg.src = backImg.src == './assets/fake-card-back.png' ? './assets/fake-card-front.png' : './assets/fake-card-back.png';
+}
+
 function create_cards(item_array)
 {
   let card_front;
@@ -560,45 +585,7 @@ function create_cards(item_array)
 
     // console.log(item_array);
 
-    let div = document.createElement("div");
-    let num = document.createElement("span");
-
-    num.className="card_number";
-    num.innerHTML = `${item.number}`;
-
-    div.append(num);
-    div.className="card_div";
-
-    card_button = document.createElement("button");
-    card_front = document.createElement("img");
-    card_button.append(card_front);
-
-    // Swap front and back button
-    card_button.onclick=function (event) {
-      let backSide=event.target.dataset.otherSide;
-      let currentSide = event.target.src;
-      event.target.src = backSide;
-      event.target.dataset.otherSide = currentSide;
-
-      let back = event.target.parentElement.nextSibling;
-      currentSide = back.src;
-      back.src=event.target.dataset.otherFake;
-      event.target.dataset.otherFake = currentSide;
-    };
-
-    card_front.src="./assets/item-images/" + item.file;
-    div.append(card_button);
-
-    if (item.usage == "f") {
-      card_front.dataset.otherSide = './assets/item-images/'+item.file_back;
-      card_front.dataset.otherFake = './assets/fake-card-front.png';
-
-      let card_back = document.createElement("img");
-      card_back.src="./assets/fake-card-back.png";
-      card_back.className="card_back";
-      div.append(card_back);
-    }
-
+    let div = create_item_card_div(item)
     output.append(div);
   }
 }
