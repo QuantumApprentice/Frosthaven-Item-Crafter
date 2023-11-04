@@ -16,8 +16,9 @@
     }
     .card_div {
       position: relative;
+      z-index: 1;
     }
-    .card_div, .card_div *  {
+    .card_div, .card_div > * {
       display: inline-flex;
       border-radius: 8px;
       border: 0;
@@ -26,6 +27,34 @@
     .card_div img {
       height: var(--card-height);
       width: auto;
+    }
+    .card_overlay {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      position: absolute;
+      inset: 0;
+      background-color: #000000d0;
+      padding: 0 8px;
+    }
+    .card_overlay > div {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      gap: 2px;
+    }
+    .card_div:hover .card_overlay {
+      display: inline-flex;
+    }
+    .card_div .card_name > :last-child {
+      text-shadow: 1px 1px 1px #000;
+    }
+    .card_div.locked .card_overlay {
+      display: inline-flex;
+      backdrop-filter: blur(8px);
+    }
+    .card_div.locked .card_name > :last-child {
+      display: none;
     }
     .card_front {
       box-shadow: 2px 0 4px #00000080;
@@ -40,16 +69,14 @@
     }
     .card_number{
       font-size: 16px;
-      position: absolute;
       display: flex;
       align-items: center;
       justify-content: center;
       width: 48px;
       height: 48px;
       padding-left: 6px;
-      color: #000;
+      color: #112;
       background: url('./assets/r-item.png');
-      top: 8%;
     }
     .card_display {
       display: flex;
@@ -95,7 +122,7 @@
       gap: 20px;
       top: 0;
       position: sticky;
-      z-index: 1;
+      z-index: 2;
       padding: 20px;
       margin: 0 -8px;
     }
@@ -170,6 +197,9 @@
     #sidebar_collapser, #sidebar_expander {
       display: none;
     }
+    .hide {
+      display: none;
+    }
     @media screen and (max-width: 1000px) {
       :root {
         --card-height: 210px;
@@ -232,13 +262,27 @@
       .header select {
         font-size: 14px;
       }
+      .card_name > :last-child {
+        font-size: 10px;
+      }
       .card_number {
-        transform: scale(80%);
-        transform-origin: top left;
+        background-size: 24px 24px;
+        font-size: 8px;
+        width: 24px;
+        height: 24px;
+        padding-left: 3px;
       }
     }
-    .hide {
-      display: none;
+    @media screen and (max-width: 374px) {
+      .card_display { /*
+        the complete lack of padding here means the "back" side of double-sided cards
+        can be cropped at the edge of the device but since they're just visual flare
+        and not required for interaction the benefit of showing two columns of items
+        outweighs the small visual problem */
+        overflow-x: hidden;
+        padding-left: 0;
+        padding-right: 0;
+      }
     }
   </style>
 </head>

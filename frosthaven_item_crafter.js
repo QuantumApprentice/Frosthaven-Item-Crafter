@@ -560,16 +560,18 @@ function create_item_card_div_html(item)
   // we used to return the div here but returning the HTML
   // reduced loading time in non-scientific tests by 15-25%
   let html = `<div id="item${item.number}" class="card_div">
-    <span class="card_number">${item.number}</span>
-    <button onclick="onItemCardClick(this)"><img loading="lazy" class="card_front" src="./assets/item-images/${item.file}"></button>
-    ${item.usage == 'f' ? `<img loading="lazy" class="card_back" src="./assets/item-images/${item.file_back}">` : ''}
+    <img loading="lazy" class="card_front" src="./assets/item-images/${item.file}">
+    ${item.usage == 'f' ? `<img onclick="onItemCardClick(this)" loading="lazy" class="card_back" src="./assets/item-images/${item.file_back}">` : ''}
+    <div class="card_overlay" onclick="onItemCardClick(this)">
+      <div class="card_name"><span><span class="card_number">${item.number}</span></span><span>${item.name}</span></div>
+    </div>
   </div>`;
   return html;
 }
 
-function onItemCardClick(buttonEl)
+function onItemCardClick(el)
 {
-  let div = buttonEl.closest(".card_div");
+  let div = el.closest(".card_div");
   let backImg = div.querySelector('.card_back');
   if (!backImg) return;
   let frontImg = div.querySelector('.card_front');
