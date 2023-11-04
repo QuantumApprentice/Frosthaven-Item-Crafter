@@ -43,8 +43,11 @@ async function load()
   let item_data_json = await fetch("./assets/item-data.json");
   item_data = await item_data_json.json();
 
-  for (const el of item_data.items) {
-    parse_cost(el);
+  let card_container = document.getElementById("card_display");
+  for (const item of item_data.items) {
+    parse_cost(item);
+    item.el = create_item_card_div(item);
+    card_container.append(item.el);
   }
   // console.log(item_data);
 
@@ -248,9 +251,10 @@ function parse_input()
 
   assign_player_stats(selected_player);
 
-  let item_array = item_data.items.filter(filter_func);
-  // console.log(item_array);
-  create_cards(item_array);
+  for (let item of item_data.items) {
+    let visible = filter_func(item);
+    item.el.classList.toggle('hide', !visible);
+  }
 
   window.location.replace(create_hash());
 }
@@ -572,22 +576,6 @@ function onItemCardClick(buttonEl) {
   frontImg.src = backSide;
   div.dataset.otherSide = currentSide;
   backImg.src = backImg.src == './assets/fake-card-back.png' ? './assets/fake-card-front.png' : './assets/fake-card-back.png';
-}
-
-function create_cards(item_array)
-{
-  let card_front;
-  let card_button;
-  let output = document.getElementById("card_display");
-  output.innerHTML="";
-
-  for (const item of item_array) {
-
-    // console.log(item_array);
-
-    let div = create_item_card_div(item)
-    output.append(div);
-  }
 }
 
 function create_link()
