@@ -557,8 +557,7 @@ function create_item_card_div(item)
   let html = `<span class="card_number">${item.number}</span>`;
   html += `<button onclick="onItemCardClick(this)"><img class="card_front" src="./assets/item-images/${item.file}"></button>`;
   if (item.usage == 'f') {
-    div.dataset.otherSide = `./assets/item-images/${item.file_back}`;
-    html += `<img class="card_back" src="./assets/fake-card-back.png">`
+    html += `<img class="card_back" src="./assets/item-images/${item.file_back}">`
   }
   div.innerHTML = html;
   return div;
@@ -567,14 +566,12 @@ function create_item_card_div(item)
 function onItemCardClick(buttonEl)
 {
   let div = buttonEl.closest(".card_div");
-  let backSide=div.dataset.otherSide;
-  if (!backSide) return;
-  let frontImg = div.querySelector('.card_front');
   let backImg = div.querySelector('.card_back');
-  let currentSide = frontImg.src;
-  frontImg.src = backSide;
-  div.dataset.otherSide = currentSide;
-  backImg.src = backImg.src == './assets/fake-card-back.png' ? './assets/fake-card-front.png' : './assets/fake-card-back.png';
+  if (!backImg) return;
+  let frontImg = div.querySelector('.card_front');
+  let tmp = backImg.src;
+  backImg.src = frontImg.src;
+  frontImg.src = tmp;
 }
 
 function create_link()

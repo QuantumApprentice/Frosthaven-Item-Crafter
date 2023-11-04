@@ -27,10 +27,16 @@
       height: var(--card-height);
       width: auto;
     }
+    .card_front, .card_back {
+      box-shadow: 2px 0 4px #00000080;
+    }
     .card_back{
       position: absolute;
-      top: 5px;
-      left: 100%;
+      z-index: -1;
+      top: 4px;
+      left: 7%;
+      clip-path: inset(0 0 6% 75%);
+      transform: rotate(7deg);
     }
     .card_number{
       font-size: 16px;
