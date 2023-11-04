@@ -104,9 +104,9 @@ function parse_hash(hash)
       name = decodeURIComponent(name).trim();
       if (name) document.getElementById(key).innerText = name;
 
-      string_to_resources(players[indx], res_str);
+      string_to_resources(players[indx], res_str || "");
 
-      players[indx].owned_items = owned;
+      players[indx].owned_items = owned || "";
     }
 
   }
@@ -172,34 +172,33 @@ function update_hash()
     if (i == 0) {
 
       let str = resources_to_string(players[i], true);
-      if (str) {
-        parts.push(`fs=`);
-        parts.push(str);
-      }
+      if (str) parts.push("fs=", str, ";");
 
-      parts.push(";");
     }
     else {
 
-      let name = document.getElementById(`p${i}`);
-      let playerName = name.innerText;
-      if (playerName == `Player ${i}`) playerName = '';
-      parts.push(`p${i}=`, encodeURIComponent(playerName));
-      parts.push(":");
-
-      let str = resources_to_string(players[i]);
-      parts.push(str);
-
-      parts.push(":");
-      parts.push(players[i].owned_items || "");
-
-      parts.push(";")
+      let name = document.getElementById(`p${i}`).innerText;
+      if (name == `Player ${i}`) name = "";
+      let resources = resources_to_string(players[i]);
+      let owned = players[i].owned_items || "";
+      if (name || resources || owned) {
+        // we could try to remove trailing : here but it's very unlikely for a
+        // player to have no owned items or resources so the benefit is minimal
+        parts.push("p", i, "=",
+          encodeURIComponent(name),
+          ":", resources,
+          ":", owned,
+          ";");
+      }
     }
   }
 
-  parts.push("ul=");
-  parts.push(document.getElementById("unlocked_items").value);
+  let ul = document.getElementById("unlocked_items").value;
+  if (ul) parts.push("ul=", ul, ";");
 
+  // we don't want to remove the # if it's the only item in parts as the entire
+  // page will reload if the string we pass to window.location.replace is empty
+  if (parts.length > 1) parts = parts.slice(0, -1);
   global_hash = parts.join('');
   window.location.replace(global_hash);
 }
