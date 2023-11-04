@@ -64,8 +64,8 @@ async function load()
   if (!document.getElementById("unlocked_items").value) {
     // show all items by default if nothing is unlocked
     document.getElementById('locked_input').value = 'all';
-    parse_input();
   }
+  parse_input();
 }
 
 
@@ -558,7 +558,7 @@ function filter_func(el, indx, arr)
 function create_item_card_div_html(item)
 {
   // we used to return the div here but returning the HTML
-  // reduced loading time in non-scientific tests by 15-20%
+  // reduced loading time in non-scientific tests by 15-25%
   let html = `<div id="item${item.number}" class="card_div">
     <span class="card_number">${item.number}</span>
     <button onclick="onItemCardClick(this)"><img loading="lazy" class="card_front" src="./assets/item-images/${item.file}"></button>
@@ -622,6 +622,7 @@ function swap_player_stats(num)
 {
   assign_player_stats(selected_player);
   show_player_stats(num);
+  parse_input();
 }
 
 function show_player_stats(num)
@@ -639,9 +640,6 @@ function show_player_stats(num)
     // console.log("2key:val= ", key, ":", val);
       form.elements[key].value = val;
   }
-
-  parse_input();
-
 }
 
 function sidebar_toggle()
