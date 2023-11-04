@@ -182,7 +182,9 @@ function create_hash()
     else {
 
       let name = document.getElementById(`p${i}`);
-      parts.push(`p${i}=`, encodeURIComponent(name.innerText || `Player ${i}`));
+      let playerName = name.innerText;
+      if (playerName == `Player ${i}`) playerName = '';
+      parts.push(`p${i}=`, encodeURIComponent(playerName));
       parts.push(":");
 
       let str = resources_to_string(players[i]);
