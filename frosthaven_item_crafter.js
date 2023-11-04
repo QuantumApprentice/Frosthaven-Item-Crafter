@@ -9,7 +9,7 @@
 //done// need to parse out the "," commas for the url
 // buttons on top of the items to add them to the owned/unlocked list, 
 
-addEventListener("hashchange", ()=>parse_hash(location.hash))
+addEventListener("hashchange", ()=>parse_hash(window.location.hash))
 
 let players = [];
 let selected_player = 1;
@@ -163,9 +163,6 @@ function resources_to_string(player, skipGold = false)
 
 function update_hash()
 {
-  const form = document.getElementById("form");
-  const formData = new FormData(form);
-
   let parts = ["#"];
 
   if (players[0]) {
@@ -200,7 +197,11 @@ function update_hash()
   // page will reload if the string we pass to window.location.replace is empty
   if (parts.length > 1) parts = parts.slice(0, -1);
   global_hash = parts.join('');
-  window.location.replace(global_hash);
+  if (global_hash == '#' && !window.location.hash) {
+    global_hash = '';
+  } else {
+    window.location.replace(global_hash);
+  }
 }
 
 function parse_numbers(input)
