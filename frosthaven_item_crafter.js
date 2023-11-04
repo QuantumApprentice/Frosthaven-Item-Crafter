@@ -553,7 +553,8 @@ function filter_func(el, indx, arr)
   return true;
 }
 
-function create_item_card_div(item) {
+function create_item_card_div(item)
+{
   let div = document.createElement('div');
   div.className="card_div";
   let html = `<span class="card_number">${item.number}</span>`;
@@ -566,7 +567,8 @@ function create_item_card_div(item) {
   return div;
 }
 
-function onItemCardClick(buttonEl) {
+function onItemCardClick(buttonEl)
+{
   let div = buttonEl.closest(".card_div");
   let backSide=div.dataset.otherSide;
   if (!backSide) return;
@@ -644,6 +646,7 @@ function show_player_stats(num)
 
 }
 
-function sidebar_toggle() {
+function sidebar_toggle()
+{
   document.getElementById('sidebar').classList.toggle('expanded');
 }
