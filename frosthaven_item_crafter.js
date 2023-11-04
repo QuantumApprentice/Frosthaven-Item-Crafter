@@ -164,32 +164,28 @@ function update_hash()
 
   let parts = ["#"];
 
+  if (players[0]) {
+    let fs = resources_to_string(players[0], true);
+    if (fs) parts.push("fs=", fs, ";");
+  }
+
   /* create link from players variable instead of form */
-  for (let i = 0; i <= 4; i++) {
+  for (let i = 1; i <= 4; i++) {
 
     if (!players[i]) { continue; }
 
-    if (i == 0) {
-
-      let str = resources_to_string(players[i], true);
-      if (str) parts.push("fs=", str, ";");
-
-    }
-    else {
-
-      let name = document.getElementById(`p${i}`).innerText;
-      if (name == `Player ${i}`) name = "";
-      let resources = resources_to_string(players[i]);
-      let owned = players[i].owned_items || "";
-      if (name || resources || owned) {
-        // we could try to remove trailing : here but it's very unlikely for a
-        // player to have no owned items or resources so the benefit is minimal
-        parts.push("p", i, "=",
-          encodeURIComponent(name),
-          ":", resources,
-          ":", owned,
-          ";");
-      }
+    let name = document.getElementById(`p${i}`).innerText;
+    if (name == `Player ${i}`) name = "";
+    let resources = resources_to_string(players[i]);
+    let owned = players[i].owned_items || "";
+    if (name || resources || owned) {
+      // we could try to remove trailing : here but it's very unlikely for a
+      // player to have no owned items or resources so the benefit is minimal
+      parts.push("p", i, "=",
+        encodeURIComponent(name),
+        ":", resources,
+        ":", owned,
+        ";");
     }
   }
 
