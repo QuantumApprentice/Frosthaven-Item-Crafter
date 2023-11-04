@@ -157,7 +157,7 @@ function resources_to_string(player, skipGold = false)
 
 }
 
-function create_hash()
+function update_hash()
 {
   const form = document.getElementById("form");
   const formData = new FormData(form);
@@ -200,9 +200,8 @@ function create_hash()
   parts.push("ul=");
   parts.push(document.getElementById("unlocked_items").value);
 
-  let s = parts.join('');
-  global_hash = s;
-  return s;
+  global_hash = parts.join('');
+  window.location.replace(global_hash);
 }
 
 function parse_numbers(input)
@@ -259,7 +258,7 @@ function parse_input()
     item.el.classList.toggle('hide', !visible);
   }
 
-  window.location.replace(create_hash());
+  update_hash();
 }
 
 document.querySelector("form").addEventListener("submit",
@@ -598,7 +597,7 @@ function change_name(el)
   // el.firstElementChild.innerHTML = new_name.trim();
   el.innerText = new_name;
   // el.replaceChild(document.createTextNode(new_name.trim()), el.firstChild);
-  create_hash();
+  update_hash();
 }
 
 function assign_player_stats(num)
