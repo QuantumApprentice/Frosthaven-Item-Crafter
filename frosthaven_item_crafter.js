@@ -101,7 +101,8 @@ function parse_hash(hash)
         players[indx] = {};
       }
 
-      document.getElementById(key).innerText = decodeURIComponent(name);
+      name = decodeURIComponent(name).trim();
+      if (name) document.getElementById(key).innerText = name;
 
       string_to_resources(players[indx], res_str);
 
