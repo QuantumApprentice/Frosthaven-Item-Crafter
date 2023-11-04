@@ -44,10 +44,14 @@ async function load()
   item_data = await item_data_json.json();
 
   let card_container = document.getElementById("card_display");
+  let html_parts = [];
   for (const item of item_data.items) {
     parse_cost(item);
-    item.el = create_item_card_div(item);
-    card_container.append(item.el);
+    html_parts.push(create_item_card_div_html(item));
+  }
+  card_container.innerHTML = html_parts.join('');
+  for (const item of item_data.items) {
+    item.el = document.getElementById(`item${item.number}`);
   }
   // console.log(item_data);
 
@@ -550,17 +554,16 @@ function filter_func(el, indx, arr)
   return true;
 }
 
-function create_item_card_div(item)
+function create_item_card_div_html(item)
 {
-  let div = document.createElement('div');
-  div.className="card_div";
-  let html = `<span class="card_number">${item.number}</span>`;
-  html += `<button onclick="onItemCardClick(this)"><img class="card_front" src="./assets/item-images/${item.file}"></button>`;
-  if (item.usage == 'f') {
-    html += `<img class="card_back" src="./assets/item-images/${item.file_back}">`
-  }
-  div.innerHTML = html;
-  return div;
+  // we used to return the div here but returning the HTML
+  // reduced loading time in non-scientific tests by 15-20%
+  let html = `<div id="item${item.number}" class="card_div">
+    <span class="card_number">${item.number}</span>
+    <button onclick="onItemCardClick(this)"><img loading="lazy" class="card_front" src="./assets/item-images/${item.file}"></button>
+    ${item.usage == 'f' ? `<img loading="lazy" class="card_back" src="./assets/item-images/${item.file_back}">` : ''}
+  </div>`;
+  return html;
 }
 
 function onItemCardClick(buttonEl)
