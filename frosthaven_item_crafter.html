@@ -33,6 +33,7 @@
     .card_overlay {
       display: none;
       flex-direction: column;
+      gap: 4px;
       align-items: center;
       position: absolute;
       inset: 0;
@@ -45,18 +46,26 @@
       width: 100%;
       gap: 2px;
     }
+    .card_overlay button {
+      width: 100%;
+      font-size: 22px;
+      border-radius: 100vmax;
+    }
+    .card_div.locked .hide_when_locked {
+      display: none;
+    }
+    .card_div:not(.locked) .hide_when_unlocked {
+      display: none;
+    }
     .card_div:hover .card_overlay {
       display: inline-flex;
     }
-    .card_div .card_name > :last-child {
+    .card_div .card_name span:not(.card_number) {
       text-shadow: 1px 1px 1px #000;
     }
     .card_div.locked .card_overlay {
       display: inline-flex;
       backdrop-filter: blur(8px);
-    }
-    .card_div.locked .card_name > :last-child {
-      display: none;
     }
     .card_front {
       box-shadow: 2px 0 4px #00000080;
@@ -265,7 +274,7 @@
       .header select {
         font-size: 14px;
       }
-      .card_name > :last-child {
+      .card_name {
         font-size: 10px;
       }
       .card_number {
@@ -274,6 +283,9 @@
         width: 24px;
         height: 24px;
         padding-left: 3px;
+      }
+      .card_overlay button {
+        font-size: 16px;
       }
     }
     @media screen and (max-width: 374px) {
@@ -434,14 +446,6 @@
         </div>
       </div>
     </form>
-
-    <div class="items">
-      <label>Unlocked Items
-        <input type="text"
-          onblur="parse_input()"
-          id="unlocked_items">
-      </label>
-    </div>
 
     <div class="flex_row">
       <button class="random_buttons"

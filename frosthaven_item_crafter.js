@@ -34,7 +34,7 @@ g_stats.snowthistle    = 0;
 
 g_stats.owned_items    = [];
 
-let unlocked_items = [];
+let unlocked_ranges = [];
 let slot_type      = "";
 let selectedFilter = "";
 let item_data;
@@ -64,7 +64,7 @@ async function load()
     parse_hash(hash);
   }
 
-  if (!document.getElementById("unlocked_items").value) {
+  if (unlocked_ranges.length == 0) {
     // show all items by default if nothing is unlocked
     document.getElementById('locked_input').value = 'all';
   }
@@ -86,8 +86,7 @@ function parse_hash(hash)
 
     if (key == "ul") {
       // console.log(key, val);
-      document.getElementById("unlocked_items").value = val;
-      unlocked_items = parse_numbers(val);
+      unlocked_ranges = parse_ranges(val);
     }
 
     if (key == "fs") {
@@ -116,6 +115,9 @@ function parse_hash(hash)
       players[indx].owned_items = owned || "";
     }
 
+  }
+  for (let item of item_data.items) {
+    item.el.classList.toggle('locked', is_locked(item.number));
   }
   show_player_stats(selected_player);
 }
@@ -193,8 +195,17 @@ function update_hash()
     }
   }
 
-  let ul = document.getElementById("unlocked_items").value;
-  if (ul) parts.push("ul=", ul, ";");
+  if (unlocked_ranges.length > 0) {
+    parts.push("ul=");
+    let first = true;
+    for (let [min, max] of unlocked_ranges) {
+      if (!first) parts.push(",");
+      else first = false;
+      parts.push(min);
+      if (max != min) parts.push("-", max);
+    }
+    parts.push(";");
+  }
 
   // we don't want to remove the # if it's the only item in parts as the entire
   // page will reload if the string we pass to window.location.replace is empty
@@ -207,36 +218,23 @@ function update_hash()
   }
 }
 
-function parse_numbers(input)
+function parse_ranges(input)
 {
-  let storage_arr = [];
+  let ranges = [];
   let card_range_array = input.split(',');
 
   for (let card_range of card_range_array) {
-    let range_array = card_range.split("-");
-
-    if (range_array.length > 1) {
-      let begin = parseInt(range_array[0], 10);
-      let end = parseInt(range_array[1], 10);
-      for (let i = begin; i <= end; i++) {
-        storage_arr.push(i);
-      }
-    }
-    else {
-      storage_arr.push(parseInt(card_range, 10));
-    }
+    let [min, max] = card_range.split("-");
+    min = parseInt(min, 10);
+    max = parseInt(max, 10) || min;
+    ranges.push([min, max]);
   }
-  return storage_arr;
+  return ranges;
 }
 
 function parse_input()
 {
-
-  // debugger
-  unlocked_items = parse_numbers(document.getElementById("unlocked_items").value);
-
-  let card_nums_string = document.getElementById("owned_items").value;
-  g_stats.owned_items = parse_numbers(card_nums_string);
+  g_stats.owned_items = document.getElementById("owned_items").value.split(',').map(s => parseInt(s, 10));
 
   slot_type           = document.getElementById("slot_filter" ).value;
   selectedFilter      = document.getElementById("locked_input").value;
@@ -269,9 +267,6 @@ document.querySelector("form").addEventListener("submit",
     submitEvent.preventDefault();
     parse_input();
 });
-document.getElementById("locked_input").addEventListener(
-  'change', parse_input
-)
 document.getElementById("owned_items").addEventListener(
   'change', parse_input
 );
@@ -361,6 +356,15 @@ function handle_special(el)
   return false;
 }
 
+function is_locked(item_number)
+{
+  for (let [min, max] of unlocked_ranges) {
+    if (item_number < min) return true;
+    if (item_number <= max) return false;
+  }
+  return true;
+}
+
 function filter_craftable_c(el)
 {
   if (g_stats.owned_items.includes(el.number)) {
@@ -377,8 +381,7 @@ function filter_craftable_c(el)
   // this assumes each item is only ever in a crafting chain once
   while (items_to_craft.length > 0) {
     let item = items_to_craft.shift();
-    if (selectedFilter != "all_craft" && !unlocked_items.includes(item.number)) {
-      
+    if (selectedFilter != "all_craft" && is_locked(item.number)) {
       return false;
     }
 
@@ -541,7 +544,7 @@ function filter_func(el, indx, arr)
   //unlocked items/owned items/craftable items filter
   //interesting logic crossing here
   if (selectedFilter == "unlock" || selectedFilter == "unlock_craft")
-    if (!unlocked_items.includes(el.number)){
+    if (is_locked(el.number)) {
     return false;
   }
   if (selectedFilter == "all_craft" || selectedFilter == "unlock_craft") {
@@ -562,14 +565,103 @@ function create_item_card_div_html(item)
 {
   // we used to return the div here but returning the HTML
   // reduced loading time in non-scientific tests by 15-25%
-  let html = `<div id="item${item.number}" class="card_div">
+  let html = `<div id="item${item.number}" data-item-number="${item.number}" class="card_div">
     <img loading="lazy" class="card_front" src="./assets/item-images/${item.file}">
     ${item.usage == 'f' ? `<img onclick="onItemCardClick(this)" loading="lazy" class="card_back" src="./assets/item-images/${item.file_back}">` : ''}
     <div class="card_overlay" onclick="onItemCardClick(this)">
-      <div class="card_name"><span><span class="card_number">${item.number}</span></span><span>${item.name}</span></div>
+      <div class="card_name">
+        <span class="card_number">${item.number}</span>
+        <span class="hide_when_locked">${item.name}</span>
+        <span class="hide_when_unlocked">Locked Item</span>
+      </div>
+      <button class="hide_when_locked" onClick="toggle_item_lock(this)">Lock</button>
+      <button class="hide_when_unlocked" onClick="toggle_item_lock(this)">Unlock</button>
     </div>
   </div>`;
   return html;
+}
+
+function toggle_item_lock(el)
+{
+  let div = el.closest(".card_div");
+  let num = parseInt(div.dataset.itemNumber, 10);
+  let locked = div.classList.toggle("locked");
+
+  // we could try to be clever here and just alter the few entries in
+  // unlocked_ranges that would need to be changed but it's more
+  // straightforward to just build up an array of all the numbers
+  // then sort and compress the list
+  let unlocked_items = [];
+  for (let [min, max] of unlocked_ranges) {
+    for (let i = min; i <= max; ++i) {
+      unlocked_items.push(i);
+    }
+  }
+  unlocked_ranges = [];
+  if (locked) {
+    let idx = unlocked_items.indexOf(num);
+    unlocked_items.splice(idx, 1);
+  } else {
+    unlocked_items.push(num);
+    unlocked_items.sort((a, b) => a - b);
+  }
+  if (unlocked_items.length == 0) {
+    update_hash();
+    return;
+  }
+  let range = [unlocked_items[0], unlocked_items[0]];
+  for (let i = 1; i < unlocked_items.length; ++i) {
+    let num = unlocked_items[i];
+    if (num == range[1] + 1) {
+      range[1] = num;
+    } else {
+      unlocked_ranges.push(range);
+      range = [num, num];
+    }
+  }
+  unlocked_ranges.push(range);
+
+  // alternate version implementing it the way described in the comment above
+  // a separate commit will be done to remove this, it's just here for reference
+  // and comparison between the two approaches. This hasn't been thoroughly tested
+  // let done = false;
+  // for (let i = 0; i < unlocked_ranges.length; ++i) {
+  //   let [min, max] = unlocked_ranges[i];
+  //   if (locked && num >= min && num <= max) {
+  //     done = true;
+  //     if (num == min) {
+  //       if (num == max) {
+  //         unlocked_ranges.splice(i, 1);
+  //       }
+  //       unlocked_ranges[i][0] = num + 1;
+  //     } else if (num == max) {
+  //       unlocked_ranges[i][1] = num - 1;
+  //     } else {
+  //       unlocked_ranges.splice(i, 1, [min, num - 1], [num + 1, max]);
+  //     }
+  //     break;
+  //   } else if (!locked && num < min) {
+  //     done = true;
+  //     if (num + 1 == min) {
+  //       unlocked_ranges[i][0] = num;
+  //     } else {
+  //       unlocked_ranges.splice(i, 0, [num, num]);
+  //     }
+  //     if (i > 0 && unlocked_ranges[i-1][1] + 1 == num) {
+  //       unlocked_ranges[i][0] = unlocked_ranges[i-1][0];
+  //       unlocked_ranges.splice(i-1, 1);
+  //     }
+  //     break;
+  //   }
+  // }
+  // if (!done) {
+  //   if (unlocked_ranges.length && num - 1 == unlocked_ranges[unlocked_ranges.length - 1][1]) {
+  //     unlocked_ranges[unlocked_ranges.length - 1][1] = num;
+  //   } else {
+  //     unlocked_ranges.push([num, num]);
+  //   }
+  // }
+  update_hash();
 }
 
 function onItemCardClick(el)
