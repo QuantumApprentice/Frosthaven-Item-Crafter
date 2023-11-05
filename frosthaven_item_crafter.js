@@ -9,7 +9,10 @@
 //done// need to parse out the "," commas for the url
 // buttons on top of the items to add them to the owned/unlocked list, 
 
-addEventListener("hashchange", ()=>parse_hash(window.location.hash))
+addEventListener("hashchange", () => {
+  parse_hash(window.location.hash);
+  parse_input();
+});
 
 let players = [];
 let selected_player = 1;
