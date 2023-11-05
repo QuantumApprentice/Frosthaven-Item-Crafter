@@ -620,47 +620,6 @@ function toggle_item_lock(el)
     }
   }
   unlocked_ranges.push(range);
-
-  // alternate version implementing it the way described in the comment above
-  // a separate commit will be done to remove this, it's just here for reference
-  // and comparison between the two approaches. This hasn't been thoroughly tested
-  // let done = false;
-  // for (let i = 0; i < unlocked_ranges.length; ++i) {
-  //   let [min, max] = unlocked_ranges[i];
-  //   if (locked && num >= min && num <= max) {
-  //     done = true;
-  //     if (num == min) {
-  //       if (num == max) {
-  //         unlocked_ranges.splice(i, 1);
-  //       }
-  //       unlocked_ranges[i][0] = num + 1;
-  //     } else if (num == max) {
-  //       unlocked_ranges[i][1] = num - 1;
-  //     } else {
-  //       unlocked_ranges.splice(i, 1, [min, num - 1], [num + 1, max]);
-  //     }
-  //     break;
-  //   } else if (!locked && num < min) {
-  //     done = true;
-  //     if (num + 1 == min) {
-  //       unlocked_ranges[i][0] = num;
-  //     } else {
-  //       unlocked_ranges.splice(i, 0, [num, num]);
-  //     }
-  //     if (i > 0 && unlocked_ranges[i-1][1] + 1 == num) {
-  //       unlocked_ranges[i][0] = unlocked_ranges[i-1][0];
-  //       unlocked_ranges.splice(i-1, 1);
-  //     }
-  //     break;
-  //   }
-  // }
-  // if (!done) {
-  //   if (unlocked_ranges.length && num - 1 == unlocked_ranges[unlocked_ranges.length - 1][1]) {
-  //     unlocked_ranges[unlocked_ranges.length - 1][1] = num;
-  //   } else {
-  //     unlocked_ranges.push([num, num]);
-  //   }
-  // }
   update_hash();
 }
 
