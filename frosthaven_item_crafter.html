@@ -8,7 +8,9 @@
   <style>
     :root{
       --sidebar-width: 350px;
+      /* manually set both the width & height so layout can be done efficiently */
       --card-height:   360px;
+      --card-width:    240px;
       --card-gap:      44px;
     }
     *{
@@ -26,7 +28,7 @@
     }
     .card_div img {
       height: var(--card-height);
-      width: auto;
+      width:  var(--card-width);
     }
     .card_overlay {
       display: none;
@@ -203,6 +205,7 @@
     @media screen and (max-width: 1000px) {
       :root {
         --card-height: 210px;
+        --card-width:  140px;
         --card-gap: 22px;
       }
       main {
