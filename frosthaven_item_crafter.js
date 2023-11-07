@@ -38,6 +38,16 @@ let unlocked_ranges = [];
 let slot_type      = "";
 let selectedFilter = "";
 let item_data;
+let item_by_number = {};
+
+const SLOT_IMAGE_BY_CODE = {
+  h: 's-head.png',
+  b: 's-body.png',
+  d: 's-dual-hand.png',
+  s: 's-single-hand.png',
+  l: 's-legs.png',
+  i: 's-item.png',
+};
 
 window.addEventListener('load', load);
 async function load()
@@ -49,6 +59,7 @@ async function load()
   let card_container = document.getElementById("card_display");
   let html_parts = [];
   for (const item of item_data.items) {
+    item_by_number[item.number] = item;
     parse_cost(item);
     html_parts.push(create_item_card_div_html(item));
   }
@@ -259,6 +270,7 @@ function parse_input()
     item.el.classList.toggle('hide', !visible);
   }
 
+  refresh_owned_items_list();
   update_hash();
 }
 
@@ -701,4 +713,22 @@ function show_player_stats(num)
 function sidebar_toggle()
 {
   document.getElementById('sidebar').classList.toggle('expanded');
+}
+
+function refresh_owned_items_list()
+{
+  let div = document.getElementById('owned_items_container');
+  let parts = [];
+  let items = g_stats.owned_items.map(item_num => item_by_number[item_num]).filter(item => item);
+  if (items.length > 0) {
+    parts.push("<h4>Owned Items</h4>");
+    for (let item of items) {
+      parts.push(`<div>
+          <span class="card_number">${item.number}</span>
+          <img src="./assets/${SLOT_IMAGE_BY_CODE[item.slot]}">
+          <span class="item_name">${item.name}</span>
+        </div>`);
+    }
+  }
+  div.innerHTML = parts.join('');
 }

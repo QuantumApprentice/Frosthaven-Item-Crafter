@@ -211,6 +211,22 @@
     .hide {
       display: none;
     }
+    #owned_items_container > h4 {
+      margin: 10px 0 4px;
+    }
+    #owned_items_container > div {
+      display: flex;
+      align-items: center;
+      justify-content: start;
+      gap: 8px;
+    }
+    #owned_items_container .item_name {
+      flex: 1;
+    }
+    #owned_items_container img {
+      width: 24px;
+      height: 24px;
+    }
     @media screen and (max-width: 1000px) {
       :root {
         --card-height: 210px;
@@ -277,7 +293,7 @@
       .card_name {
         font-size: 10px;
       }
-      .card_number {
+      .card_display .card_number {
         background-size: 24px 24px;
         font-size: 8px;
         width: 24px;
@@ -457,6 +473,8 @@
         Reset
       </button>
     </div>
+
+    <div id="owned_items_container"></div>
   </div>
 
   <main>
