@@ -51,10 +51,9 @@
       font-size: 22px;
       border-radius: 100vmax;
     }
-    .card_div.locked .hide_when_locked {
-      display: none;
-    }
-    .card_div:not(.locked) .hide_when_unlocked {
+    .card_div.locked .hide_when_locked,
+    .card_div:not(.locked) .hide_when_unlocked,
+    .card_div.owned .hide_when_owned {
       display: none;
     }
     .card_div:hover .card_overlay {
@@ -226,6 +225,13 @@
     #owned_items_container img {
       width: 24px;
       height: 24px;
+    }
+    #owned_items_container button {
+      display: inline-flex;
+      padding: 10px;
+      border: 0;
+      background: none;
+      cursor: pointer;
     }
     @media screen and (max-width: 1000px) {
       :root {
@@ -447,17 +453,6 @@
               onblur="parse_input()"
               name="snowthistle"
               id="snowthistle">
-          </label>
-        </div>
-      </div>
-
-      <div class="items">
-        <div>
-          <label>Owned Items<br>
-            <input type="text"
-              onblur="parse_input()"
-              name="owned_items"
-              id="owned_items">
           </label>
         </div>
       </div>

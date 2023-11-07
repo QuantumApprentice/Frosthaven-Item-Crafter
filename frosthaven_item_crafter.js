@@ -11,6 +11,7 @@
 
 addEventListener("hashchange", () => {
   parse_hash(window.location.hash);
+  refresh_owned_items_list();
   parse_input();
 });
 
@@ -38,7 +39,6 @@ let unlocked_ranges = [];
 let slot_type      = "";
 let selectedFilter = "";
 let item_data;
-let item_by_number = {};
 
 const SLOT_BY_CODE = {
   h: {alt: 'Head',          src: 's-head.png'},
@@ -59,7 +59,6 @@ async function load()
   let card_container = document.getElementById("card_display");
   let html_parts = [];
   for (const item of item_data.items) {
-    item_by_number[item.number] = item;
     parse_cost(item);
     html_parts.push(create_item_card_div_html(item));
   }
@@ -79,6 +78,8 @@ async function load()
     // show all items by default if nothing is unlocked
     document.getElementById('locked_input').value = 'all';
   }
+  g_stats.owned_items = players[selected_player]?.owned_items || [];
+  refresh_owned_items_list();
   parse_input();
 }
 
@@ -123,7 +124,19 @@ function parse_hash(hash)
 
       string_to_resources(players[indx], res_str || "");
 
-      players[indx].owned_items = owned || "";
+      let owned_items = (owned || "").split(',').map(s => parseInt(s, 10) || 0);
+      // we probably don't need to deal with the URL hash containing unexpected
+      // things but here we remove duplicates and non-numbers from the string anyway
+      owned_items.sort((a, b) => a - b);
+      for (let i = 1; i < owned_items.length; ++i) {
+        if (owned_items[i] === owned_items[i-1]) {
+          owned_items.splice(i, 1);
+          --i;
+        }
+      }
+      if (owned_items[0] === 0) owned_items.splice(0, 1);
+
+      players[indx].owned_items = owned_items;
     }
 
   }
@@ -194,7 +207,7 @@ function update_hash()
     let name = document.getElementById(`p${i}`).innerText;
     if (name == `Player ${i}`) name = "";
     let resources = resources_to_string(players[i]);
-    let owned = players[i].owned_items || "";
+    let owned = (players[i].owned_items || []).join(',');
     if (name || resources || owned) {
       // we could try to remove trailing : here but it's very unlikely for a
       // player to have no owned items or resources so the benefit is minimal
@@ -245,8 +258,6 @@ function parse_ranges(input)
 
 function parse_input()
 {
-  g_stats.owned_items = document.getElementById("owned_items").value.split(',').map(s => parseInt(s, 10));
-
   slot_type           = document.getElementById("slot_filter" ).value;
   selectedFilter      = document.getElementById("locked_input").value;
 
@@ -270,7 +281,6 @@ function parse_input()
     item.el.classList.toggle('hide', !visible);
   }
 
-  refresh_owned_items_list();
   update_hash();
 }
 
@@ -279,9 +289,6 @@ document.querySelector("form").addEventListener("submit",
     submitEvent.preventDefault();
     parse_input();
 });
-document.getElementById("owned_items").addEventListener(
-  'change', parse_input
-);
 
 
 for (const input_el of document.querySelectorAll("input")) {
@@ -293,6 +300,7 @@ function reset_crafting()
   for (const i of document.querySelectorAll("input[type=number]")) {
     i.value = "";
   }
+  g_stats.owned_items = [];
   parse_input();
 }
 
@@ -377,9 +385,14 @@ function is_locked(item_number)
   return true;
 }
 
+function is_owned(item_number)
+{
+  return g_stats.owned_items.includes(item_number);
+}
+
 function filter_craftable_c(el)
 {
-  if (g_stats.owned_items.includes(el.number)) {
+  if (is_owned(el.number)) {
     return false;
   }
 
@@ -403,7 +416,7 @@ function filter_craftable_c(el)
     else {
       regular_items_to_craft.add(item);
       for (let item_num of item.resources.i) {
-        if (!g_stats.owned_items.includes(item_num)) {
+        if (!is_owned(item_num)) {
           items_to_craft.push(item_data.items[item_num-1]);
         }
       }
@@ -565,7 +578,7 @@ function filter_func(el, indx, arr)
     }
   }
   if (selectedFilter == "owned") {
-    if (!g_stats.owned_items.includes(el.number)) {
+    if (!is_owned(el.number)) {
       return false;
     }
   }
@@ -588,9 +601,34 @@ function create_item_card_div_html(item)
       </div>
       <button class="hide_when_locked" onClick="toggle_item_lock(this)">Lock</button>
       <button class="hide_when_unlocked" onClick="toggle_item_lock(this)">Unlock</button>
+      <button class="hide_when_locked hide_when_owned" onClick="gain_item(this)">Gain</button>
     </div>
   </div>`;
   return html;
+}
+
+function gain_item(el)
+{
+  let div = el.closest(".card_div");
+  let num = parseInt(div.dataset.itemNumber, 10);
+  g_stats.owned_items.push(num);
+  g_stats.owned_items.sort((a, b) => a - b);
+  for (let i = 1; i < g_stats.owned_items.length; ++i) {
+    if (g_stats.owned_items[i] === g_stats.owned_items[i - 1]) {
+      g_stats.owned_items.splice(i, 1);
+      --i;
+    }
+  }
+  refresh_owned_items_list();
+  parse_input();
+}
+
+function lose_item(item_number)
+{
+  let idx = g_stats.owned_items.indexOf(item_number);
+  if (idx >= 0) g_stats.owned_items.splice(idx, 1);
+  refresh_owned_items_list();
+  parse_input();
 }
 
 function toggle_item_lock(el)
@@ -676,6 +714,7 @@ function assign_player_stats(num)
     if (val == "0") { val = ""; }
     players[num][key] = val;
   }
+  players[num].owned_items = g_stats.owned_items;
 }
 
 function update_highlight(current_button)
@@ -706,8 +745,10 @@ function show_player_stats(num)
   for (const el of Object.entries(players[num])) {
     let [key, val] = el;
     // console.log("2key:val= ", key, ":", val);
-      form.elements[key].value = val;
+    if (form.elements[key]) form.elements[key].value = val;
   }
+  g_stats.owned_items = players[num].owned_items || [];
+  refresh_owned_items_list();
 }
 
 function sidebar_toggle()
@@ -719,15 +760,19 @@ function refresh_owned_items_list()
 {
   let div = document.getElementById('owned_items_container');
   let parts = [];
-  let items = g_stats.owned_items.map(item_num => item_by_number[item_num]).filter(item => item);
-  if (items.length > 0) {
-    parts.push("<h4>Owned Items</h4>");
-    for (let item of items) {
+  let idx = 0;
+  for (let item of item_data.items) {
+    let owned = item.number === g_stats.owned_items[idx];
+    item.el.classList.toggle("owned", owned);
+    if (owned) {
+      ++idx;
+      if (parts.length === 0) parts.push("<h4>Owned Items</h4>");
       let slot = SLOT_BY_CODE[item.slot];
       parts.push(`<div>
           <span class="card_number">${item.number}</span>
           <img src="./assets/${slot.src}" alt="${slot.alt}">
           <span class="item_name">${item.name}</span>
+          <button onClick="lose_item(${item.number})"><img src="./assets/clear.png" alt="x"></button>
         </div>`);
     }
   }
