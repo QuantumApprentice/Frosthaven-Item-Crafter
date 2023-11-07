@@ -41,6 +41,13 @@ let slot_type      = "";
 let selectedFilter = "";
 let item_data;
 
+const EMPTY_RESOURCES = {
+  w: 0, m: 0, h: 0,
+  v: 0, n: 0, c: 0,
+  f: 0, r: 0, s: 0,
+  g: 0,
+};
+
 const SLOT_BY_CODE = {
   h: {alt: 'Head',          src: 's-head.png'},
   b: {alt: 'Body',          src: 's-body.png'},
@@ -526,20 +533,7 @@ function filter_craftable_c(el)
 function parse_cost(item)
 {
   let cost_array = item.cost.split(",");
-  item.resources = {};
-  item.resources.w = 0;
-  item.resources.m = 0;
-  item.resources.h = 0;
-
-  item.resources.v = 0;
-  item.resources.n = 0;
-  item.resources.c = 0;
-  item.resources.f = 0;
-  item.resources.r = 0;
-  item.resources.s = 0;
-
-  item.resources.g = 0;
-
+  item.resources = Object.assign({}, EMPTY_RESOURCES);
   item.resources.i = [];
 
   for (const el of cost_array) {
