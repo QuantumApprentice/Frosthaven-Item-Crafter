@@ -606,7 +606,7 @@ function create_item_card_div_html(item)
   // reduced loading time in non-scientific tests by 15-25%
   let html = `<div id="item${item.number}" data-item-number="${item.number}" class="card_div locked">
     <img loading="lazy" class="card_front" src="./assets/item-images/${item.file}">
-    ${item.usage == 'f' ? `<img onclick="onItemCardClick(this)" loading="lazy" class="card_back" src="./assets/item-images/${item.file_back}">` : ''}
+    ${item.usage == 'f' ? `<img onclick="onItemCardClick(this)" loading="lazy" class="card_back hide_when_locked" src="./assets/item-images/${item.file_back}">` : ''}
     <div class="card_overlay" onclick="onItemCardClick(this)">
       <div class="card_name">
         <span class="card_number">${item.number}</span>
