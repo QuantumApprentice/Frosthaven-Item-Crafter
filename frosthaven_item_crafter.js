@@ -372,24 +372,6 @@ function init_player_0()
   players[0].gold        = "";
 }
 
-function handle_special(el)
-{
-  if (el.number == 98) {
-    if (has_at_least_herbs(2, 1)) {
-      return true;
-    }
-  }
-  if (el.number == 119) {
-    if ((has_at_least_herbs(2, 1)) &&
-        (has_at_least_herbs(1, 2)) ||
-        (has_at_least_herbs(3, 1)))
-      {
-      return true;
-    }
-  }
-  return false;
-}
-
 function is_locked(item_number)
 {
   for (let [min, max] of unlocked_ranges) {
