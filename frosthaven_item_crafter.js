@@ -40,13 +40,13 @@ let selectedFilter = "";
 let item_data;
 let item_by_number = {};
 
-const SLOT_IMAGE_BY_CODE = {
-  h: 's-head.png',
-  b: 's-body.png',
-  d: 's-dual-hand.png',
-  s: 's-single-hand.png',
-  l: 's-legs.png',
-  i: 's-item.png',
+const SLOT_BY_CODE = {
+  h: {alt: 'Head',          src: 's-head.png'},
+  b: {alt: 'Body',          src: 's-body.png'},
+  d: {alt: 'Dual-Handed',   src: 's-dual-hand.png'},
+  s: {alt: 'Single-Handed', src: 's-single-hand.png'},
+  l: {alt: 'Legs',          src: 's-legs.png'},
+  i: {alt: 'Small Item',    src: 's-item.png'},
 };
 
 window.addEventListener('load', load);
@@ -723,9 +723,10 @@ function refresh_owned_items_list()
   if (items.length > 0) {
     parts.push("<h4>Owned Items</h4>");
     for (let item of items) {
+      let slot = SLOT_BY_CODE[item.slot];
       parts.push(`<div>
           <span class="card_number">${item.number}</span>
-          <img src="./assets/${SLOT_IMAGE_BY_CODE[item.slot]}">
+          <img src="./assets/${slot.src}" alt="${slot.alt}">
           <span class="item_name">${item.name}</span>
         </div>`);
     }
