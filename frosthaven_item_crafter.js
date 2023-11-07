@@ -607,7 +607,7 @@ function create_item_card_div_html(item)
   let html = `<div id="item${item.number}" data-item-number="${item.number}" class="card_div locked">
     <img loading="lazy" class="card_front" src="./assets/item-images/${item.file}">
     ${item.usage == 'f' ? `<img onclick="onItemCardClick(this)" loading="lazy" class="card_back hide_when_locked" src="./assets/item-images/${item.file_back}">` : ''}
-    <div class="card_overlay" onclick="onItemCardClick(this)">
+    <div class="card_overlay">
       <div class="card_name">
         <span class="card_number">${item.number}</span>
         <span class="hide_when_locked">${item.name}</span>
@@ -616,6 +616,7 @@ function create_item_card_div_html(item)
       <button class="hide_when_locked dev_tools" onClick="toggle_item_lock(this)">Lock</button>
       <button class="hide_when_unlocked" onClick="toggle_item_lock(this)">Unlock</button>
       <button class="hide_when_locked hide_when_owned" onClick="gain_item(this)">Gain</button>
+      ${item.usage == 'f' ? `<button class="hide_when_locked" onclick="onItemCardClick(this)">Flip</button>` : ''}
     </div>
   </div>`;
   return html;
