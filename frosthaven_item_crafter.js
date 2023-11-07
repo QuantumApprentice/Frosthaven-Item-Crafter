@@ -327,27 +327,27 @@ function reset_crafting()
 
 function has_at_least_herbs(amt, min)
 {
-  let total = 0;
-  if (amt <= g_stats.arrowvine  ) { total += 1;
-    if (total >= min) {return true;}
+  let herbs = [];
+  if (amt <= g_stats.arrowvine  ) { herbs.push('v');
+    if (herbs.length >= min) {return herbs;}
   }
-  if (amt <= g_stats.axenut     ) { total += 1;
-    if (total >= min) {return true;}
+  if (amt <= g_stats.axenut     ) { herbs.push('n');
+    if (herbs.length >= min) {return herbs;}
   }
-  if (amt <= g_stats.corpsecap  ) { total += 1;
-    if (total >= min) {return true;}
+  if (amt <= g_stats.corpsecap  ) { herbs.push('c');
+    if (herbs.length >= min) {return herbs;}
   }
-  if (amt <= g_stats.flamefruit ) { total += 1;
-    if (total >= min) {return true;}
+  if (amt <= g_stats.flamefruit ) { herbs.push('f');
+    if (herbs.length >= min) {return herbs;}
   }
-  if (amt <= g_stats.rockroot   ) { total += 1;
-    if (total >= min) {return true;}
+  if (amt <= g_stats.rockroot   ) { herbs.push('r');
+    if (herbs.length >= min) {return herbs;}
   }
-  if (amt <= g_stats.snowthistle) { total += 1;
-    if (total >= min) {return true;}
+  if (amt <= g_stats.snowthistle) { herbs.push('s');
+    if (herbs.length >= min) {return herbs;}
   }
 
-  return false;
+  return null;
 }
 
 // So at the start of the function, 
@@ -393,16 +393,17 @@ function is_owned(item_number)
   return g_stats.owned_items.includes(item_number);
 }
 
-function filter_craftable_c(el)
+function calculate_crafting_cost(el)
 {
   if (is_owned(el.number)) {
-    return false;
+    return null;
   }
 
   if (el.number >= 248 && el.number <= 264) {
-    return false;
+    return null;
   }
 
+  let items_required = [];
   let items_to_craft = [el];
   let regular_items_to_craft = new Set();
   let special_items_to_craft = new Set();
@@ -410,7 +411,7 @@ function filter_craftable_c(el)
   while (items_to_craft.length > 0) {
     let item = items_to_craft.shift();
     if (selectedFilter != "all_craft" && is_locked(item.number)) {
-      return false;
+      return null;
     }
 
     if (item.resources["-"]) {
@@ -419,53 +420,46 @@ function filter_craftable_c(el)
     else {
       regular_items_to_craft.add(item);
       for (let item_num of item.resources.i) {
-        if (!is_owned(item_num)) {
+        if (is_owned(item_num)) {
+          items_required.push(item_num);
+        } else {
           items_to_craft.push(item_data.items[item_num-1]);
         }
       }
     }
   }
 
-  let total_w = 0;
-  let total_m = 0;
-  let total_h = 0;
-
-  let total_v = 0;
-  let total_n = 0;
-  let total_c = 0;
-  let total_f = 0;
-  let total_r = 0;
-  let total_s = 0;
-
-  let total_g = 0;
+  let total = Object.assign({}, EMPTY_RESOURCES);
 
   let current_stats = {...g_stats};
 
   for (let item of regular_items_to_craft) {
-    total_w += item.resources.w;
-    total_m += item.resources.m;
-    total_h += item.resources.h;
+    total.w += item.resources.w;
+    total.m += item.resources.m;
+    total.h += item.resources.h;
 
-    total_v += item.resources.v;
-    total_n += item.resources.n;
-    total_c += item.resources.c;
-    total_f += item.resources.f;
-    total_r += item.resources.r;
-    total_s += item.resources.s;
+    total.v += item.resources.v;
+    total.n += item.resources.n;
+    total.c += item.resources.c;
+    total.f += item.resources.f;
+    total.r += item.resources.r;
+    total.s += item.resources.s;
 
-    total_g += item.resources.g;
+    total.g += item.resources.g;
   }
 
-  g_stats.wood        -= total_w;
-  g_stats.metal       -= total_m;
-  g_stats.hide        -= total_h;
+  g_stats.wood        -= total.w;
+  g_stats.metal       -= total.m;
+  g_stats.hide        -= total.h;
 
-  g_stats.arrowvine   -= total_v;
-  g_stats.axenut      -= total_n;
-  g_stats.corpsecap   -= total_c;
-  g_stats.flamefruit  -= total_f;
-  g_stats.rockroot    -= total_r;
-  g_stats.snowthistle -= total_s;
+  g_stats.arrowvine   -= total.v;
+  g_stats.axenut      -= total.n;
+  g_stats.corpsecap   -= total.c;
+  g_stats.flamefruit  -= total.f;
+  g_stats.rockroot    -= total.r;
+  g_stats.snowthistle -= total.s;
+
+  g_stats.gold        -= total.g;
 
   if (selected_player != 0) {
     if (!players[0]) {
@@ -478,8 +472,6 @@ function filter_craftable_c(el)
     g_stats.rockroot    += parseInt(players[0].rockroot,    10) || 0;
     g_stats.snowthistle += parseInt(players[0].snowthistle, 10) || 0;
   }
-
-  g_stats.gold        -= total_g;
 
   try {
     if (
@@ -496,7 +488,7 @@ function filter_craftable_c(el)
 
         || g_stats.gold        < 0
     ) {
-      return false;
+      return null;
     }
 
     let has_item_98   = special_items_to_craft.delete(item_data.items[97]);
@@ -504,30 +496,57 @@ function filter_craftable_c(el)
 
     if (special_items_to_craft.size > 0) {
       console.warn("Unhandled special items", special_items_to_craft);
-      return false;
+      return null;
     }
 
+    // this code seems messier than it should be - there's
+    // probably a simpler way to handle these potions
     if (has_item_98 && has_item_119) {
       // this is never the case but for completeness we handle it anyway
-      return (
-            has_at_least_herbs(5, 1)
-        || (has_at_least_herbs(4, 1) && has_at_least_herbs(1, 2))
-        || (has_at_least_herbs(3, 1) && has_at_least_herbs(2, 2))
-        || (has_at_least_herbs(2, 2) && has_at_least_herbs(1, 3))
-      );
+      let h1, h2;
+      if (h1 = has_at_least_herbs(5, 1)) {
+        total[h1[0]] += 5;
+      } else if ((h1 = has_at_least_herbs(4, 1))
+              && (h2 = has_at_least_herbs(1, 2))) {
+        total[h1[0]] += 4;
+        for (let r of h2) if (!h1.includes(r)) total[r] += 1;
+      } else if ((h1 = has_at_least_herbs(3, 1))
+              && (h2 = has_at_least_herbs(2, 2))) {
+        total[h1[0]] += 3;
+        for (let r of h2) if (!h1.includes(r)) total[r] += 2;
+      } else if ((h1 = has_at_least_herbs(2, 2))
+              && (h2 = has_at_least_herbs(1, 3))) {
+        for (let r of h1) total[r] += 2;
+        for (let r of h2) if (!h1.includes(r)) total[r] += 1;
+      } else {
+        return null;
+      }
     } else if (has_item_98) {
-      return has_at_least_herbs(2, 1);
+      let h1;
+      if (h1 = has_at_least_herbs(2, 1)) {
+        total[h1[0]] += 2;
+      } else {
+        return null;
+      }
     } else if (has_item_119) {
-      return (
-        has_at_least_herbs(3, 1) ||
-       (has_at_least_herbs(2, 1) &&
-        has_at_least_herbs(1, 2))
-      );
+      let h1, h2;
+      if (h1 = has_at_least_herbs(3, 1)) {
+        total[h1[0]] += 3;
+      } else if ((h1 = has_at_least_herbs(2, 1))
+              && (h2 = has_at_least_herbs(1, 2))) {
+        total[h1[0]] += 2;
+        for (let r of h2) if (!h1.includes(r)) total[r] += 1;
+      } else {
+        return null;
+      }
     }
   } finally {
     g_stats = current_stats;
   }
-  return true;
+  return {
+    items_required,
+    ...total,
+  };
 }
 
 function parse_cost(item)
@@ -544,7 +563,7 @@ function parse_cost(item)
       item.resources.i.push(amount);
     }
     else {
-      Object.assign(item.resources, {[resource]:amount});
+      item.resources[resource] = amount;
     }
   }
 }
@@ -563,7 +582,7 @@ function filter_func(el, indx, arr)
     return false;
   }
   if (selectedFilter == "all_craft" || selectedFilter == "unlock_craft") {
-    if (!filter_craftable_c(el)) {
+    if (!calculate_crafting_cost(el)) {
       return false;
     }
   }
