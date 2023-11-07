@@ -19,6 +19,7 @@ let players = [];
 let selected_player = 1;
 let g_stats = {};
 let global_hash = "";
+let dev_tools = false;
 
 g_stats.gold           = 0;
 
@@ -89,12 +90,19 @@ function parse_hash(hash)
 {
   if (hash == global_hash) { return; }
   global_hash = hash;
+  dev_tools = false;
 
   let str_arr = hash.substring(1).split(";");
 
   for (const el of str_arr) {
     let [key, val] = el.split("=");
     // console.log("key:val", key, val);
+
+    if (key == "dev") {
+      dev_tools = true;
+      let el = document.getElementById('devtools_style');
+      if (el) el.parentNode.removeChild(el);
+    }
 
     if (key == "ul") {
       // console.log(key, val);
@@ -229,6 +237,10 @@ function update_hash()
       if (max != min) parts.push("-", max);
     }
     parts.push(";");
+  }
+
+  if (dev_tools) {
+    parts.push('dev', ';');
   }
 
   // we don't want to remove the # if it's the only item in parts as the entire
@@ -599,7 +611,7 @@ function create_item_card_div_html(item)
         <span class="hide_when_locked">${item.name}</span>
         <span class="hide_when_unlocked">Locked Item</span>
       </div>
-      <button class="hide_when_locked" onClick="toggle_item_lock(this)">Lock</button>
+      <button class="hide_when_locked dev_tools" onClick="toggle_item_lock(this)">Lock</button>
       <button class="hide_when_unlocked" onClick="toggle_item_lock(this)">Unlock</button>
       <button class="hide_when_locked hide_when_owned" onClick="gain_item(this)">Gain</button>
     </div>
