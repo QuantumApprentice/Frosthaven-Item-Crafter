@@ -90,6 +90,8 @@ function parse_hash(hash)
 {
   if (hash == global_hash) { return; }
   global_hash = hash;
+  players = [];
+  unlocked_ranges = [];
   dev_tools = false;
 
   let str_arr = hash.substring(1).split(";");
