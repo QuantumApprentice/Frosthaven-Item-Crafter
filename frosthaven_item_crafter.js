@@ -40,12 +40,26 @@ let unlocked_ranges = [];
 let slot_type      = "";
 let selectedFilter = "";
 let item_data;
+let item_by_number = {};
 
 const EMPTY_RESOURCES = {
   w: 0, m: 0, h: 0,
   v: 0, n: 0, c: 0,
   f: 0, r: 0, s: 0,
   g: 0,
+};
+
+const RESOURCE_BY_CODE = {
+  w: 'wood',
+  m: 'metal',
+  h: 'hide',
+  v: 'arrowvine',
+  n: 'axenut',
+  c: 'corpsecap',
+  f: 'flamefruit',
+  r: 'rockroot',
+  s: 'snowthistle',
+  g: 'gold',
 };
 
 const SLOT_BY_CODE = {
@@ -72,6 +86,7 @@ async function load()
   }
   card_container.innerHTML = html_parts.join('');
   for (const item of item_data.items) {
+    item_by_number[item.number] = item;
     item.el = document.getElementById(`item${item.number}`);
   }
   // console.log(item_data);
@@ -298,8 +313,9 @@ function parse_input()
   assign_player_stats(selected_player);
 
   for (let item of item_data.items) {
-    let visible = filter_func(item);
+    let [visible, craftable] = check_visible_and_craftable(item);
     item.el.classList.toggle('hide', !visible);
+    item.el.classList.toggle('craftable', craftable);
   }
 
   update_hash();
@@ -545,7 +561,7 @@ function calculate_crafting_cost(el)
   }
   return {
     items_required,
-    ...total,
+    resources: total,
   };
 }
 
@@ -568,31 +584,32 @@ function parse_cost(item)
   }
 }
 
-function filter_func(el, indx, arr)
+function check_visible_and_craftable(el)
 {
+  let craftable = calculate_crafting_cost(el) != null;
   //slot filter to isolate body parts
   if (slot_type && el.slot !== slot_type) {
-    return false;
+    return [false, craftable];
   }
 
   //unlocked items/owned items/craftable items filter
   //interesting logic crossing here
   if (selectedFilter == "unlock" || selectedFilter == "unlock_craft")
     if (is_locked(el.number)) {
-    return false;
+    return [false, craftable];
   }
   if (selectedFilter == "all_craft" || selectedFilter == "unlock_craft") {
-    if (!calculate_crafting_cost(el)) {
-      return false;
+    if (!craftable) {
+      return [false, craftable];
     }
   }
   if (selectedFilter == "owned") {
     if (!is_owned(el.number)) {
-      return false;
+      return [false, craftable];
     }
   }
 
-  return true;
+  return [true, craftable];
 }
 
 function create_item_card_div_html(item)
@@ -611,6 +628,7 @@ function create_item_card_div_html(item)
       <button class="hide_when_locked dev_tools" onClick="toggle_item_lock(this)">Lock</button>
       <button class="hide_when_unlocked" onClick="toggle_item_lock(this)">Unlock</button>
       <button class="hide_when_locked hide_when_owned" onClick="gain_item(this)">Gain</button>
+      <button class="hide_when_locked hide_when_not_craftable" onClick="craft_item(this)">Craft</button>
       ${item.usage == 'f' ? `<button class="hide_when_locked" onclick="onItemCardClick(this)">Flip</button>` : ''}
     </div>
   </div>`;
@@ -631,6 +649,36 @@ function gain_item(el)
   }
   refresh_owned_items_list();
   parse_input();
+}
+
+function craft_item(el)
+{
+  let div = el.closest(".card_div");
+  let num = parseInt(div.dataset.itemNumber, 10);
+  let item = item_by_number[num];
+  let cost = calculate_crafting_cost(item);
+  if (!cost) {
+    // the item shouldn't be marked as craftable
+    // if it's not craftable so this shouldn't
+    // happen but if it does, we can just remove
+    // the craftable class from the element
+    div.classList.remove('craftable');
+    return;
+  }
+  let {items_required, resources} = cost;
+  for (let item_number of items_required) {
+    let idx = g_stats.owned_items.indexOf(item_number);
+    if (idx >= 0) g_stats.owned_items.splice(idx, 1);
+  }
+  const form = document.getElementById("form");
+  for (let [resource_code, count] of Object.entries(resources)) {
+    if (count == 0) continue;
+    let resource = RESOURCE_BY_CODE[resource_code];
+    g_stats[resource] -= count;
+    form.elements[resource].value = g_stats[resource] || '';
+  }
+  assign_player_stats(selected_player);
+  gain_item(el);
 }
 
 function lose_item(item_number)

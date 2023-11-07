@@ -53,7 +53,8 @@
     }
     .card_div.locked .hide_when_locked,
     .card_div:not(.locked) .hide_when_unlocked,
-    .card_div.owned .hide_when_owned {
+    .card_div.owned .hide_when_owned,
+    .card_div:not(.craftable) .hide_when_not_craftable {
       display: none;
     }
     .card_div:hover .card_overlay {
