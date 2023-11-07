@@ -411,7 +411,7 @@ function is_owned(item_number)
 
 function calculate_crafting_cost(el)
 {
-  if (is_owned(el.number)) {
+  if (selected_player == 0 || is_owned(el.number)) {
     return null;
   }
 
