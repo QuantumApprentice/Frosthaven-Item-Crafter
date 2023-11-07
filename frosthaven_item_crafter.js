@@ -676,7 +676,7 @@ function craft_item(el)
     let resource = RESOURCE_BY_CODE[resource_code];
     g_stats[resource] -= count;
     if (g_stats[resource] < 0) {
-      players[0][resource] = `${parseInt(players[0][resource]) + g_stats[resource]}`;
+      players[0][resource] = `${(parseInt(players[0][resource]) + g_stats[resource]) || ''}`;
       g_stats[resource] = 0;
     }
     form.elements[resource].value = g_stats[resource] || '';
