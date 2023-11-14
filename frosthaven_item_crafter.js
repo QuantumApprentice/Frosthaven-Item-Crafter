@@ -9,12 +9,17 @@
 //done// need to parse out the "," commas for the url
 // buttons on top of the items to add them to the owned/unlocked list, 
 
-addEventListener("hashchange", ()=>parse_hash(location.hash))
+addEventListener("hashchange", () => {
+  parse_hash(window.location.hash);
+  refresh_owned_items_list();
+  parse_input();
+});
 
 let players = [];
 let selected_player = 1;
 let g_stats = {};
 let global_hash = "";
+let dev_tools = false;
 
 g_stats.gold           = 0;
 
@@ -31,21 +36,58 @@ g_stats.snowthistle    = 0;
 
 g_stats.owned_items    = [];
 
-let unlocked_items = [];
-let ul             = "";
+let unlocked_ranges = [];
 let slot_type      = "";
 let selectedFilter = "";
 let item_data;
+let item_by_number = {};
 
-get_data();
-async function get_data()
+const EMPTY_RESOURCES = {
+  w: 0, m: 0, h: 0,
+  v: 0, n: 0, c: 0,
+  f: 0, r: 0, s: 0,
+  g: 0,
+};
+
+const RESOURCE_BY_CODE = {
+  w: 'wood',
+  m: 'metal',
+  h: 'hide',
+  v: 'arrowvine',
+  n: 'axenut',
+  c: 'corpsecap',
+  f: 'flamefruit',
+  r: 'rockroot',
+  s: 'snowthistle',
+  g: 'gold',
+};
+
+const SLOT_BY_CODE = {
+  h: {alt: 'Head',          src: 's-head.png'},
+  b: {alt: 'Body',          src: 's-body.png'},
+  d: {alt: 'Dual-Handed',   src: 's-dual-hand.png'},
+  s: {alt: 'Single-Handed', src: 's-single-hand.png'},
+  l: {alt: 'Legs',          src: 's-legs.png'},
+  i: {alt: 'Small Item',    src: 's-item.png'},
+};
+
+window.addEventListener('load', load);
+async function load()
 {
   if (item_data) { return item_data; }
-  let item_data_json = await fetch("./item-data.json");
+  let item_data_json = await fetch("./assets/item-data.json");
   item_data = await item_data_json.json();
 
-  for (const el of item_data.items) {
-    parse_cost(el);
+  let card_container = document.getElementById("card_display");
+  let html_parts = [];
+  for (const item of item_data.items) {
+    parse_cost(item);
+    html_parts.push(create_item_card_div_html(item));
+  }
+  card_container.innerHTML = html_parts.join('');
+  for (const item of item_data.items) {
+    item_by_number[item.number] = item;
+    item.el = document.getElementById(`item${item.number}`);
   }
   // console.log(item_data);
 
@@ -54,6 +96,14 @@ async function get_data()
     // console.log("test?");
     parse_hash(hash);
   }
+
+  if (unlocked_ranges.length == 0) {
+    // show all items by default if nothing is unlocked
+    document.getElementById('locked_input').value = 'all';
+  }
+  g_stats.owned_items = players[selected_player]?.owned_items || [];
+  refresh_owned_items_list();
+  parse_input();
 }
 
 
@@ -62,6 +112,9 @@ function parse_hash(hash)
 {
   if (hash == global_hash) { return; }
   global_hash = hash;
+  players = [];
+  unlocked_ranges = [];
+  dev_tools = false;
 
   let str_arr = hash.substring(1).split(";");
 
@@ -69,11 +122,15 @@ function parse_hash(hash)
     let [key, val] = el.split("=");
     // console.log("key:val", key, val);
 
+    if (key == "dev") {
+      dev_tools = true;
+      let el = document.getElementById('devtools_style');
+      if (el) el.parentNode.removeChild(el);
+    }
+
     if (key == "ul") {
       // console.log(key, val);
-      ul = val;
-      unlocked_items = parse_numbers(val);
-      document.getElementById("unlocked_items").value = val;
+      unlocked_ranges = parse_ranges(val);
     }
 
     if (key == "fs") {
@@ -86,7 +143,7 @@ function parse_hash(hash)
 
 
     if (key.startsWith("p")) {
-      let indx = parseInt(key.slice(1));
+      let indx = parseInt(key.slice(1), 10);
       let [name, res_str, owned] = val.split(":");
       // console.log("indx nro", decodeURIComponent(name), res_str, owned);
 
@@ -94,13 +151,29 @@ function parse_hash(hash)
         players[indx] = {};
       }
 
-      document.getElementById(key).innerText = decodeURIComponent(name);
+      name = decodeURIComponent(name).trim();
+      if (name) document.getElementById(key).innerText = name;
 
-      string_to_resources(players[indx], res_str);
+      string_to_resources(players[indx], res_str || "");
 
-      players[indx].owned_items = owned;
+      let owned_items = (owned || "").split(',').map(s => parseInt(s, 10) || 0);
+      // we probably don't need to deal with the URL hash containing unexpected
+      // things but here we remove duplicates and non-numbers from the string anyway
+      owned_items.sort((a, b) => a - b);
+      for (let i = 1; i < owned_items.length; ++i) {
+        if (owned_items[i] === owned_items[i-1]) {
+          owned_items.splice(i, 1);
+          --i;
+        }
+      }
+      if (owned_items[0] === 0) owned_items.splice(0, 1);
+
+      players[indx].owned_items = owned_items;
     }
 
+  }
+  for (let item of item_data.items) {
+    item.el.classList.toggle('locked', is_locked(item.number));
   }
   show_player_stats(selected_player);
 }
@@ -149,86 +222,78 @@ function resources_to_string(player, skipGold = false)
 
 }
 
-function create_hash()
+function update_hash()
 {
-  const form = document.getElementById("form");
-  const formData = new FormData(form);
-
   let parts = ["#"];
 
+  if (players[0]) {
+    let fs = resources_to_string(players[0], true);
+    if (fs) parts.push("fs=", fs, ";");
+  }
+
   /* create link from players variable instead of form */
-  for (let i = 0; i <= 4; i++) {
+  for (let i = 1; i <= 4; i++) {
 
     if (!players[i]) { continue; }
 
-    if (i == 0) {
-
-      let str = resources_to_string(players[i], true);
-      if (str) {
-        parts.push(`fs=`);
-        parts.push(str);
-      }
-
-      parts.push(";");
-    }
-    else {
-
-      let name = document.getElementById(`p${i}`);
-      parts.push(`p${i}=`, encodeURIComponent(name.innerText || `Player ${i}`));
-      parts.push(":");
-
-      let str = resources_to_string(players[i]);
-      parts.push(str);
-
-      parts.push(":");
-      parts.push(players[i].owned_items || "");
-
-      parts.push(";")
+    let name = document.getElementById(`p${i}`).innerText;
+    if (name == `Player ${i}`) name = "";
+    let resources = resources_to_string(players[i]);
+    let owned = (players[i].owned_items || []).join(',');
+    if (name || resources || owned) {
+      // we could try to remove trailing : here but it's very unlikely for a
+      // player to have no owned items or resources so the benefit is minimal
+      parts.push("p", i, "=",
+        encodeURIComponent(name),
+        ":", resources,
+        ":", owned,
+        ";");
     }
   }
 
-  parts.push("ul=");
-  parts.push(ul);
+  if (unlocked_ranges.length > 0) {
+    parts.push("ul=");
+    let first = true;
+    for (let [min, max] of unlocked_ranges) {
+      if (!first) parts.push(",");
+      else first = false;
+      parts.push(min);
+      if (max != min) parts.push("-", max);
+    }
+    parts.push(";");
+  }
 
-  let s = parts.join('');
+  if (dev_tools) {
+    parts.push('dev', ';');
+  }
 
-  return s;
+  // we don't want to remove the # if it's the only item in parts as the entire
+  // page will reload if the string we pass to window.location.replace is empty
+  if (parts.length > 1) parts = parts.slice(0, -1);
+  global_hash = parts.join('');
+  if (global_hash == '#' && !window.location.hash) {
+    global_hash = '';
+  } else {
+    window.location.replace(global_hash);
+  }
 }
 
-function parse_numbers(input)
+function parse_ranges(input)
 {
-  let storage_arr = [];
+  let ranges = [];
   let card_range_array = input.split(',');
 
   for (let card_range of card_range_array) {
-    let range_array = card_range.split("-");
-
-    if (range_array.length > 1) {
-      let begin = parseInt(range_array[0]);
-      let end = parseInt(range_array[1]);
-      for (let i = begin; i <= end; i++) {
-        storage_arr.push(i);
-      }
-    }
-    else {
-      storage_arr.push(parseInt(card_range));
-    }
+    let [min, max] = card_range.split("-");
+    min = parseInt(min, 10);
+    max = parseInt(max, 10) || min;
+    ranges.push([min, max]);
   }
-  return storage_arr;
+  return ranges;
 }
 
 function parse_input()
 {
-
-  // debugger
-  if (ul != document.getElementById("unlocked_items").value) {
-    ul = document.getElementById("unlocked_items").value;
-    unlocked_items = parse_numbers(ul);
-  }
-
-  let card_nums_string = document.getElementById("owned_items").value;
-  g_stats.owned_items = parse_numbers(card_nums_string);
-
   slot_type           = document.getElementById("slot_filter" ).value;
   selectedFilter      = document.getElementById("locked_input").value;
 
@@ -247,11 +312,13 @@ function parse_input()
 
   assign_player_stats(selected_player);
 
-  let item_array = item_data.items.filter(filter_func);
-  // console.log(item_array);
-  create_cards(item_array);
+  for (let item of item_data.items) {
+    let [visible, craftable] = check_visible_and_craftable(item);
+    item.el.classList.toggle('hide', !visible);
+    item.el.classList.toggle('craftable', craftable);
+  }
 
-  window.location.replace(create_hash());
+  update_hash();
 }
 
 document.querySelector("form").addEventListener("submit",
@@ -259,12 +326,6 @@ document.querySelector("form").addEventListener("submit",
     submitEvent.preventDefault();
     parse_input();
 });
-document.getElementById("locked_input").addEventListener(
-  'change', parse_input
-)
-document.getElementById("owned_items").addEventListener(
-  'change', parse_input
-);
 
 
 for (const input_el of document.querySelectorAll("input")) {
@@ -276,32 +337,33 @@ function reset_crafting()
   for (const i of document.querySelectorAll("input[type=number]")) {
     i.value = "";
   }
+  g_stats.owned_items = [];
   parse_input();
 }
 
 function has_at_least_herbs(amt, min)
 {
-  let total = 0;
-  if (amt <= g_stats.arrowvine  ) { total += 1;
-    if (total >= min) {return true;}
+  let herbs = [];
+  if (amt <= g_stats.arrowvine  ) { herbs.push('v');
+    if (herbs.length >= min) {return herbs;}
   }
-  if (amt <= g_stats.axenut     ) { total += 1;
-    if (total >= min) {return true;}
+  if (amt <= g_stats.axenut     ) { herbs.push('n');
+    if (herbs.length >= min) {return herbs;}
   }
-  if (amt <= g_stats.corpsecap  ) { total += 1;
-    if (total >= min) {return true;}
+  if (amt <= g_stats.corpsecap  ) { herbs.push('c');
+    if (herbs.length >= min) {return herbs;}
   }
-  if (amt <= g_stats.flamefruit ) { total += 1;
-    if (total >= min) {return true;}
+  if (amt <= g_stats.flamefruit ) { herbs.push('f');
+    if (herbs.length >= min) {return herbs;}
   }
-  if (amt <= g_stats.rockroot   ) { total += 1;
-    if (total >= min) {return true;}
+  if (amt <= g_stats.rockroot   ) { herbs.push('r');
+    if (herbs.length >= min) {return herbs;}
   }
-  if (amt <= g_stats.snowthistle) { total += 1;
-    if (total >= min) {return true;}
+  if (amt <= g_stats.snowthistle) { herbs.push('s');
+    if (herbs.length >= min) {return herbs;}
   }
 
-  return false;
+  return null;
 }
 
 // So at the start of the function, 
@@ -333,43 +395,39 @@ function init_player_0()
   players[0].gold        = "";
 }
 
-function handle_special(el)
+function is_locked(item_number)
 {
-  if (el.number == 98) {
-    if (has_at_least_herbs(2, 1)) {
-      return true;
-    }
+  for (let [min, max] of unlocked_ranges) {
+    if (item_number < min) return true;
+    if (item_number <= max) return false;
   }
-  if (el.number == 119) {
-    if ((has_at_least_herbs(2, 1)) &&
-        (has_at_least_herbs(1, 2)) ||
-        (has_at_least_herbs(3, 1)))
-      {
-      return true;
-    }
-  }
-  return false;
+  return true;
 }
 
-function filter_craftable_c(el)
+function is_owned(item_number)
 {
-  if (g_stats.owned_items.includes(el.number)) {
-    return false;
+  return g_stats.owned_items.includes(item_number);
+}
+
+function calculate_crafting_cost(el)
+{
+  if (selected_player == 0 || is_owned(el.number)) {
+    return null;
   }
 
   if (el.number >= 248 && el.number <= 264) {
-    return false;
+    return null;
   }
 
+  let items_required = [];
   let items_to_craft = [el];
   let regular_items_to_craft = new Set();
   let special_items_to_craft = new Set();
   // this assumes each item is only ever in a crafting chain once
   while (items_to_craft.length > 0) {
     let item = items_to_craft.shift();
-    if (selectedFilter != "all_craft" && !unlocked_items.includes(item.number)) {
-      
-      return false;
+    if (selectedFilter != "all_craft" && is_locked(item.number)) {
+      return null;
     }
 
     if (item.resources["-"]) {
@@ -378,67 +436,58 @@ function filter_craftable_c(el)
     else {
       regular_items_to_craft.add(item);
       for (let item_num of item.resources.i) {
-        if (!g_stats.owned_items.includes(item_num)) {
+        if (is_owned(item_num)) {
+          items_required.push(item_num);
+        } else {
           items_to_craft.push(item_data.items[item_num-1]);
         }
       }
     }
   }
 
-  let total_w = 0;
-  let total_m = 0;
-  let total_h = 0;
-
-  let total_v = 0;
-  let total_n = 0;
-  let total_c = 0;
-  let total_f = 0;
-  let total_r = 0;
-  let total_s = 0;
-
-  let total_g = 0;
+  let total = Object.assign({}, EMPTY_RESOURCES);
 
   let current_stats = {...g_stats};
 
   for (let item of regular_items_to_craft) {
-    total_w += item.resources.w;
-    total_m += item.resources.m;
-    total_h += item.resources.h;
+    total.w += item.resources.w;
+    total.m += item.resources.m;
+    total.h += item.resources.h;
 
-    total_v += item.resources.v;
-    total_n += item.resources.n;
-    total_c += item.resources.c;
-    total_f += item.resources.f;
-    total_r += item.resources.r;
-    total_s += item.resources.s;
+    total.v += item.resources.v;
+    total.n += item.resources.n;
+    total.c += item.resources.c;
+    total.f += item.resources.f;
+    total.r += item.resources.r;
+    total.s += item.resources.s;
 
-    total_g += item.resources.g;
+    total.g += item.resources.g;
   }
 
-  g_stats.wood        -= total_w;
-  g_stats.metal       -= total_m;
-  g_stats.hide        -= total_h;
+  g_stats.wood        -= total.w;
+  g_stats.metal       -= total.m;
+  g_stats.hide        -= total.h;
 
-  g_stats.arrowvine   -= total_v;
-  g_stats.axenut      -= total_n;
-  g_stats.corpsecap   -= total_c;
-  g_stats.flamefruit  -= total_f;
-  g_stats.rockroot    -= total_r;
-  g_stats.snowthistle -= total_s;
+  g_stats.arrowvine   -= total.v;
+  g_stats.axenut      -= total.n;
+  g_stats.corpsecap   -= total.c;
+  g_stats.flamefruit  -= total.f;
+  g_stats.rockroot    -= total.r;
+  g_stats.snowthistle -= total.s;
+
+  g_stats.gold        -= total.g;
 
   if (selected_player != 0) {
     if (!players[0]) {
       init_player_0();
     }
-    g_stats.arrowvine   += parseInt(players[0].arrowvine  ) || 0;
-    g_stats.axenut      += parseInt(players[0].axenut     ) || 0;
-    g_stats.corpsecap   += parseInt(players[0].corpsecap  ) || 0;
-    g_stats.flamefruit  += parseInt(players[0].flamefruit ) || 0;
-    g_stats.rockroot    += parseInt(players[0].rockroot   ) || 0;
-    g_stats.snowthistle += parseInt(players[0].snowthistle) || 0;
+    g_stats.arrowvine   += parseInt(players[0].arrowvine,   10) || 0;
+    g_stats.axenut      += parseInt(players[0].axenut,      10) || 0;
+    g_stats.corpsecap   += parseInt(players[0].corpsecap,   10) || 0;
+    g_stats.flamefruit  += parseInt(players[0].flamefruit,  10) || 0;
+    g_stats.rockroot    += parseInt(players[0].rockroot,    10) || 0;
+    g_stats.snowthistle += parseInt(players[0].snowthistle, 10) || 0;
   }
-
-  g_stats.gold        -= total_g;
 
   try {
     if (
@@ -455,7 +504,7 @@ function filter_craftable_c(el)
 
         || g_stats.gold        < 0
     ) {
-      return false;
+      return null;
     }
 
     let has_item_98   = special_items_to_craft.delete(item_data.items[97]);
@@ -463,144 +512,238 @@ function filter_craftable_c(el)
 
     if (special_items_to_craft.size > 0) {
       console.warn("Unhandled special items", special_items_to_craft);
-      return false;
+      return null;
     }
 
+    // this code seems messier than it should be - there's
+    // probably a simpler way to handle these potions
     if (has_item_98 && has_item_119) {
       // this is never the case but for completeness we handle it anyway
-      return (
-            has_at_least_herbs(5, 1)
-        || (has_at_least_herbs(4, 1) && has_at_least_herbs(1, 2))
-        || (has_at_least_herbs(3, 1) && has_at_least_herbs(2, 2))
-        || (has_at_least_herbs(2, 2) && has_at_least_herbs(1, 3))
-      );
+      let h1, h2;
+      if (h1 = has_at_least_herbs(5, 1)) {
+        total[h1[0]] += 5;
+      } else if ((h1 = has_at_least_herbs(4, 1))
+              && (h2 = has_at_least_herbs(1, 2))) {
+        total[h1[0]] += 4;
+        for (let r of h2) if (!h1.includes(r)) total[r] += 1;
+      } else if ((h1 = has_at_least_herbs(3, 1))
+              && (h2 = has_at_least_herbs(2, 2))) {
+        total[h1[0]] += 3;
+        for (let r of h2) if (!h1.includes(r)) total[r] += 2;
+      } else if ((h1 = has_at_least_herbs(2, 2))
+              && (h2 = has_at_least_herbs(1, 3))) {
+        for (let r of h1) total[r] += 2;
+        for (let r of h2) if (!h1.includes(r)) total[r] += 1;
+      } else {
+        return null;
+      }
     } else if (has_item_98) {
-      return has_at_least_herbs(2, 1);
+      let h1;
+      if (h1 = has_at_least_herbs(2, 1)) {
+        total[h1[0]] += 2;
+      } else {
+        return null;
+      }
     } else if (has_item_119) {
-      return (
-        has_at_least_herbs(3, 1) ||
-       (has_at_least_herbs(2, 1) &&
-        has_at_least_herbs(1, 2))
-      );
+      let h1, h2;
+      if (h1 = has_at_least_herbs(3, 1)) {
+        total[h1[0]] += 3;
+      } else if ((h1 = has_at_least_herbs(2, 1))
+              && (h2 = has_at_least_herbs(1, 2))) {
+        total[h1[0]] += 2;
+        for (let r of h2) if (!h1.includes(r)) total[r] += 1;
+      } else {
+        return null;
+      }
     }
   } finally {
     g_stats = current_stats;
   }
-  return true;
+  return {
+    items_required,
+    resources: total,
+  };
 }
 
 function parse_cost(item)
 {
   let cost_array = item.cost.split(",");
-  item.resources = {};
-  item.resources.w = 0;
-  item.resources.m = 0;
-  item.resources.h = 0;
-
-  item.resources.v = 0;
-  item.resources.n = 0;
-  item.resources.c = 0;
-  item.resources.f = 0;
-  item.resources.r = 0;
-  item.resources.s = 0;
-
-  item.resources.g = 0;
-
+  item.resources = Object.assign({}, EMPTY_RESOURCES);
   item.resources.i = [];
 
   for (const el of cost_array) {
     let resource = el.substring(0,1);
-    let amount = parseInt(el.substring(1)) || 1;
+    let amount = parseInt(el.substring(1), 10) || 1;
 
     if (resource == "i") {
       item.resources.i.push(amount);
     }
     else {
-      Object.assign(item.resources, {[resource]:amount});
+      item.resources[resource] = amount;
     }
   }
 }
 
-function filter_func(el, indx, arr)
+function check_visible_and_craftable(el)
 {
+  let craftable = calculate_crafting_cost(el) != null;
   //slot filter to isolate body parts
   if (slot_type && el.slot !== slot_type) {
-    return false;
+    return [false, craftable];
   }
 
   //unlocked items/owned items/craftable items filter
   //interesting logic crossing here
   if (selectedFilter == "unlock" || selectedFilter == "unlock_craft")
-    if (!unlocked_items.includes(el.number)){
-    return false;
+    if (is_locked(el.number)) {
+    return [false, craftable];
   }
   if (selectedFilter == "all_craft" || selectedFilter == "unlock_craft") {
-    if (!filter_craftable_c(el)) {
-      return false;
+    if (!craftable) {
+      return [false, craftable];
     }
   }
   if (selectedFilter == "owned") {
-    if (!g_stats.owned_items.includes(el.number)) {
-      return false;
+    if (!is_owned(el.number)) {
+      return [false, craftable];
     }
   }
 
-  return true;
+  return [true, craftable];
 }
 
-function create_cards(item_array)
+function create_item_card_div_html(item)
 {
-  let card_front;
-  let card_button;
-  let output = document.getElementById("card_display");
-  output.innerHTML="";
+  // we used to return the div here but returning the HTML
+  // reduced loading time in non-scientific tests by 15-25%
+  let html = `<div id="item${item.number}" data-item-number="${item.number}" class="card_div locked">
+    <img loading="lazy" class="card_front" src="./assets/item-images/${item.file}">
+    ${item.usage == 'f' ? `<img onclick="onItemCardClick(this)" loading="lazy" class="card_back hide_when_locked" src="./assets/item-images/${item.file_back}">` : ''}
+    <div class="card_overlay">
+      <div class="card_name">
+        <span class="card_number">${item.number}</span>
+        <span class="hide_when_locked">${item.name}</span>
+        <span class="hide_when_unlocked">Locked Item</span>
+      </div>
+      <button class="hide_when_locked dev_tools" onClick="toggle_item_lock(this)">Lock</button>
+      <button class="hide_when_unlocked" onClick="toggle_item_lock(this)">Unlock</button>
+      <button class="hide_when_locked hide_when_owned" onClick="gain_item(this)">Gain</button>
+      <button class="hide_when_locked hide_when_not_craftable" onClick="craft_item(this)">Craft</button>
+      ${item.usage == 'f' ? `<button class="hide_when_locked" onclick="onItemCardClick(this)">Flip</button>` : ''}
+    </div>
+  </div>`;
+  return html;
+}
 
-  for (const item of item_array) {
-
-    // console.log(item_array);
-
-    let div = document.createElement("div");
-    let num = document.createElement("span");
-
-    num.className="card_number";
-    num.innerHTML = `${item.number}`;
-
-    div.append(num);
-    div.className="card_div";
-
-    card_button = document.createElement("button");
-    card_front = document.createElement("img");
-    card_button.append(card_front);
-
-    // "Swap front and back" button
-    card_button.onclick=function (event) {
-      let backSide=event.target.dataset.otherSide;
-      let currentSide = event.target.src;
-      event.target.src = backSide;
-      event.target.dataset.otherSide = currentSide;
-
-      let back = event.target.parentElement.nextSibling;
-      currentSide = back.src;
-      back.src=event.target.dataset.otherFake;
-      event.target.dataset.otherFake = currentSide;
-    };
-
-    card_front.src="./item-images/" + item.file;
-    card_front.className="card_front";
-    div.append(card_button);
-
-    if (item.usage == "f") {
-      card_front.dataset.otherSide = './item-images/'+item.file_back;
-      card_front.dataset.otherFake = './icons-slots/fake-card-front.png';
-
-      let card_back = document.createElement("img");
-      card_back.src="./icons-slots/fake-card-back.png";
-      card_back.className="card_back";
-      div.append(card_back);
+function gain_item(el)
+{
+  let div = el.closest(".card_div");
+  let num = parseInt(div.dataset.itemNumber, 10);
+  g_stats.owned_items.push(num);
+  g_stats.owned_items.sort((a, b) => a - b);
+  for (let i = 1; i < g_stats.owned_items.length; ++i) {
+    if (g_stats.owned_items[i] === g_stats.owned_items[i - 1]) {
+      g_stats.owned_items.splice(i, 1);
+      --i;
     }
-
-    output.append(div);
   }
+  refresh_owned_items_list();
+  parse_input();
+}
+
+function craft_item(el)
+{
+  let div = el.closest(".card_div");
+  let num = parseInt(div.dataset.itemNumber, 10);
+  let item = item_by_number[num];
+  let cost = calculate_crafting_cost(item);
+  if (!cost) {
+    // the item shouldn't be marked as craftable
+    // if it's not craftable so this shouldn't
+    // happen but if it does, we can just remove
+    // the craftable class from the element
+    div.classList.remove('craftable');
+    return;
+  }
+  let {items_required, resources} = cost;
+  for (let item_number of items_required) {
+    let idx = g_stats.owned_items.indexOf(item_number);
+    if (idx >= 0) g_stats.owned_items.splice(idx, 1);
+  }
+  const form = document.getElementById("form");
+  for (let [resource_code, count] of Object.entries(resources)) {
+    if (count == 0) continue;
+    let resource = RESOURCE_BY_CODE[resource_code];
+    g_stats[resource] -= count;
+    if (g_stats[resource] < 0) {
+      players[0][resource] = `${(parseInt(players[0][resource]) + g_stats[resource]) || ''}`;
+      g_stats[resource] = 0;
+    }
+    form.elements[resource].value = g_stats[resource] || '';
+  }
+  assign_player_stats(selected_player);
+  gain_item(el);
+}
+
+function lose_item(item_number)
+{
+  let idx = g_stats.owned_items.indexOf(item_number);
+  if (idx >= 0) g_stats.owned_items.splice(idx, 1);
+  refresh_owned_items_list();
+  parse_input();
+}
+
+function toggle_item_lock(el)
+{
+  let div = el.closest(".card_div");
+  let num = parseInt(div.dataset.itemNumber, 10);
+  let locked = div.classList.toggle("locked");
+
+  // we could try to be clever here and just alter the few entries in
+  // unlocked_ranges that would need to be changed but it's more
+  // straightforward to just build up an array of all the numbers
+  // then sort and compress the list
+  let unlocked_items = [];
+  for (let [min, max] of unlocked_ranges) {
+    for (let i = min; i <= max; ++i) {
+      unlocked_items.push(i);
+    }
+  }
+  unlocked_ranges = [];
+  if (locked) {
+    let idx = unlocked_items.indexOf(num);
+    unlocked_items.splice(idx, 1);
+  } else {
+    unlocked_items.push(num);
+    unlocked_items.sort((a, b) => a - b);
+  }
+  if (unlocked_items.length == 0) {
+    update_hash();
+    return;
+  }
+  let range = [unlocked_items[0], unlocked_items[0]];
+  for (let i = 1; i < unlocked_items.length; ++i) {
+    let num = unlocked_items[i];
+    if (num == range[1] + 1) {
+      range[1] = num;
+    } else {
+      unlocked_ranges.push(range);
+      range = [num, num];
+    }
+  }
+  unlocked_ranges.push(range);
+  update_hash();
+}
+
+function onItemCardClick(el)
+{
+  let div = el.closest(".card_div");
+  let backImg = div.querySelector('.card_back');
+  if (!backImg) return;
+  let frontImg = div.querySelector('.card_front');
+  let tmp = backImg.src;
+  backImg.src = frontImg.src;
+  frontImg.src = tmp;
 }
 
 function create_link()
@@ -611,12 +754,14 @@ function create_link()
 
 function change_name(el)
 {
-  let new_name = window.prompt("Enter player name.", el.textContent.trim());
+  let new_name = window.prompt("Enter player name.", el.textContent.trim())?.trim();
   if (!new_name) {
     return;
   }
-  el.innerText = new_name.trim();
-  create_hash();
+  // el.firstElementChild.innerHTML = new_name.trim();
+  el.innerText = new_name;
+  // el.replaceChild(document.createTextNode(new_name.trim()), el.firstChild);
+  update_hash();
 }
 
 function assign_player_stats(num)
@@ -631,6 +776,7 @@ function assign_player_stats(num)
     if (val == "0") { val = ""; }
     players[num][key] = val;
   }
+  players[num].owned_items = g_stats.owned_items;
 }
 
 function update_highlight(current_button)
@@ -645,6 +791,7 @@ function swap_player_stats(num)
 {
   assign_player_stats(selected_player);
   show_player_stats(num);
+  parse_input();
 }
 
 function show_player_stats(num)
@@ -660,9 +807,36 @@ function show_player_stats(num)
   for (const el of Object.entries(players[num])) {
     let [key, val] = el;
     // console.log("2key:val= ", key, ":", val);
-      form.elements[key].value = val;
+    if (form.elements[key]) form.elements[key].value = val;
   }
+  g_stats.owned_items = players[num].owned_items || [];
+  refresh_owned_items_list();
+}
 
-  parse_input();
+function sidebar_toggle()
+{
+  document.getElementById('sidebar').classList.toggle('expanded');
+}
 
+function refresh_owned_items_list()
+{
+  let div = document.getElementById('owned_items_container');
+  let parts = [];
+  let idx = 0;
+  for (let item of item_data.items) {
+    let owned = item.number === g_stats.owned_items[idx];
+    item.el.classList.toggle("owned", owned);
+    if (owned) {
+      ++idx;
+      if (parts.length === 0) parts.push("<h4>Owned Items</h4>");
+      let slot = SLOT_BY_CODE[item.slot];
+      parts.push(`<div>
+          <span class="card_number">${item.number}</span>
+          <img src="./assets/${slot.src}" alt="${slot.alt}">
+          <span class="item_name">${item.name}</span>
+          <button onClick="lose_item(${item.number})"><img src="./assets/clear.png" alt="x"></button>
+        </div>`);
+    }
+  }
+  div.innerHTML = parts.join('');
 }
