@@ -183,17 +183,17 @@ function string_to_resources(player, str, fh_supplies = false)
   let resource_string_parts = str.split(",");
   let idx = 0;
   if (!fh_supplies) {
-    player.gold      = resource_string_parts[idx++] || "";
+    player.gold      = resource_string_parts[idx++] || '';
   }
-  player.wood        = resource_string_parts[idx++] || "";
-  player.metal       = resource_string_parts[idx++] || "";
-  player.hide        = resource_string_parts[idx++] || "";
-  player.arrowvine   = resource_string_parts[idx++] || "";
-  player.axenut      = resource_string_parts[idx++] || "";
-  player.corpsecap   = resource_string_parts[idx++] || "";
-  player.flamefruit  = resource_string_parts[idx++] || "";
-  player.rockroot    = resource_string_parts[idx++] || "";
-  player.snowthistle = resource_string_parts[idx++] || "";
+  player.wood        = resource_string_parts[idx++] || '';
+  player.metal       = resource_string_parts[idx++] || '';
+  player.hide        = resource_string_parts[idx++] || '';
+  player.arrowvine   = resource_string_parts[idx++] || '';
+  player.axenut      = resource_string_parts[idx++] || '';
+  player.corpsecap   = resource_string_parts[idx++] || '';
+  player.flamefruit  = resource_string_parts[idx++] || '';
+  player.rockroot    = resource_string_parts[idx++] || '';
+  player.snowthistle = resource_string_parts[idx++] || '';
 }
 
 function resources_to_string(player, skipGold = false)
@@ -383,16 +383,16 @@ function has_at_least_herbs(amt, min)
 function init_player_0()
 {
   players[0] = {};
-  players[0].wood        = "";
-  players[0].metal       = "";
-  players[0].hide        = "";
-  players[0].arrowvine   = "";
-  players[0].axenut      = "";
-  players[0].corpsecap   = "";
-  players[0].flamefruit  = "";
-  players[0].rockroot    = "";
-  players[0].snowthistle = "";
-  players[0].gold        = "";
+  players[0].wood        = '';
+  players[0].metal       = '';
+  players[0].hide        = '';
+  players[0].arrowvine   = '';
+  players[0].axenut      = '';
+  players[0].corpsecap   = '';
+  players[0].flamefruit  = '';
+  players[0].rockroot    = '';
+  players[0].snowthistle = '';
+  players[0].gold        = '';
 }
 
 function is_locked(item_number)
@@ -445,7 +445,7 @@ function calculate_crafting_cost(el)
     }
   }
 
-  let total = Object.assign({}, EMPTY_RESOURCES);
+  let total = {...EMPTY_RESOURCES};
 
   let current_stats = {...g_stats};
 
@@ -568,7 +568,7 @@ function calculate_crafting_cost(el)
 function parse_cost(item)
 {
   let cost_array = item.cost.split(",");
-  item.resources = Object.assign({}, EMPTY_RESOURCES);
+  item.resources = {...EMPTY_RESOURCES};
   item.resources.i = [];
 
   for (const el of cost_array) {
@@ -618,7 +618,10 @@ function create_item_card_div_html(item)
   // reduced loading time in non-scientific tests by 15-25%
   let html = `<div id="item${item.number}" data-item-number="${item.number}" class="card_div locked">
     <img loading="lazy" class="card_front" src="./assets/item-images/${item.file}">
-    ${item.usage == 'f' ? `<img onclick="onItemCardClick(this)" loading="lazy" class="card_back hide_when_locked" src="./assets/item-images/${item.file_back}">` : ''}
+    ${item.usage == 'f' ? `<img onclick="onItemCardClick(this)" 
+                            loading="lazy" 
+                            class="card_back hide_when_locked" 
+                            src="./assets/item-images/${item.file_back}">` : ''}
     <div class="card_overlay">
       <div class="card_name">
         <span class="card_number">${item.number}</span>
@@ -676,7 +679,7 @@ function craft_item(el)
     let resource = RESOURCE_BY_CODE[resource_code];
     g_stats[resource] -= count;
     if (g_stats[resource] < 0) {
-      players[0][resource] = `${(parseInt(players[0][resource]) + g_stats[resource]) || ''}`;
+      players[0][resource] = `${(parseInt(players[0][resource]) + g_stats[resource])}`;
       g_stats[resource] = 0;
     }
     form.elements[resource].value = g_stats[resource] || '';
@@ -773,8 +776,8 @@ function assign_player_stats(num)
     let [key, val] = el;
     // console.log("1key:val =>", key, ":", val);
 
-    if (val == "0") { val = ""; }
-    players[num][key] = val;
+    // if (val === "0") { val = 0; }
+    players[num][key] = parseInt(val, 10);
   }
   players[num].owned_items = g_stats.owned_items;
 }
@@ -803,11 +806,14 @@ function show_player_stats(num)
     reset_crafting();
   }
 
+  let gold = document.getElementById("gold");
+  gold.closest('div').classList.toggle('hide', (num === 0));
+
   const form = document.getElementById("form");
-  for (const el of Object.entries(players[num])) {
-    let [key, val] = el;
+  for (const resource of Object.entries(players[num])) {
+    let [key, val] = resource;
     // console.log("2key:val= ", key, ":", val);
-    if (form.elements[key]) form.elements[key].value = val;
+    if (form.elements[key]) form.elements[key].value = val || '';
   }
   g_stats.owned_items = players[num].owned_items || [];
   refresh_owned_items_list();

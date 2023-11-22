@@ -179,10 +179,7 @@
     }
     .players button{
       width: 100%;
-      text-align: center;
       font-size: 30px;
-
-      display: block;
       cursor: pointer;
       border: 5px solid transparent;
     }
@@ -209,7 +206,7 @@
       display: none;
     }
     .hide {
-      display: none;
+      display: none !important;
     }
     #owned_items_container > h4 {
       margin: 10px 0 4px;
@@ -257,38 +254,25 @@
         align-items: center;
         justify-content: center;
         width: 100%;
-        margin: 0 0;
         padding: 10px;
         font-size: 16px;
         border: 0;
       }
-      #sidebar_collapser span {
+      #sidebar_collapser img{
         display: inline-block;
-        height: 0;
-        border-top: 12px solid transparent;
-        border-bottom: 12px solid transparent;
-        border-left: 12px solid transparent;
-        border-right: 12px solid #fff;
+        width: 24px;
+        height: 24px;
       }
       #sidebar_expander {
         display: inline-block;
-        position: absolute;
         padding: 0;
-        height: 0;
+        position: absolute;
         left: 10px;
-        background: transparent;
+        border: 0;
       }
-      #sidebar_expander {
-        display: inline-block;
-        background: transparent;
-        padding: 0;
-        height: 0;
-        position: absolute;
-        left: 10px;
-        border-top: 12px solid transparent;
-        border-bottom: 12px solid transparent;
-        border-right: 12px solid transparent;
-        border-left: 12px solid #fff;
+      #sidebar_expander img{
+        width: 24px;
+        height: 24px;
       }
       .header {
         padding: 10px;
@@ -329,7 +313,7 @@
 <body>
   <div id="sidebar">
     <div class="pull-to-sidebar-edge">
-      <button id="sidebar_collapser" type="button" onclick="sidebar_toggle();"><span></span>Close</button>
+      <button id="sidebar_collapser" type="button" onclick="sidebar_toggle();"><img src="./assets/collapse.png" alt="Collapse">Close</button>
     </div>
     <form id="form">
       <div class="players pull-to-sidebar-edge">
@@ -476,7 +460,7 @@
 
   <main>
     <div class="header">
-      <button id="sidebar_expander" type="button" onclick="sidebar_toggle();"></button>
+      <button id="sidebar_expander" type="button" onclick="sidebar_toggle();"><img src="./assets/expand.png" alt="Expand Sidebar"></button>
       <div>
         <select onchange="parse_input()"
           name="locked_input"
