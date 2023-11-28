@@ -40,7 +40,7 @@ let unlocked_ranges = [];
 let slot_type      = "";
 let selectedFilter = "";
 let item_data;
-let item_by_number = {};
+let item_by_number = new Map();
 
 const EMPTY_RESOURCES = {
   w: 0, m: 0, h: 0,
@@ -86,7 +86,7 @@ async function load()
   }
   card_container.innerHTML = html_parts.join('');
   for (const item of item_data.items) {
-    item_by_number[item.number] = item;
+    item_by_number.set(item.number, item);
     item.el = document.getElementById(`item${item.number}`);
   }
   // console.log(item_data);
@@ -137,10 +137,8 @@ function parse_hash(hash)
       if (!players[0]) {
         players[0] = {};
       }
-
       string_to_resources(players[0], val, true);
     }
-
 
     if (key.startsWith("p")) {
       let indx = parseInt(key.slice(1), 10);
@@ -167,7 +165,6 @@ function parse_hash(hash)
         }
       }
       if (owned_items[0] === 0) owned_items.splice(0, 1);
-
       players[indx].owned_items = owned_items;
     }
 
@@ -439,7 +436,7 @@ function calculate_crafting_cost(el)
         if (is_owned(item_num)) {
           items_required.push(item_num);
         } else {
-          items_to_craft.push(item_data.items[item_num-1]);
+          items_to_craft.push(item_by_number.get(item_num));
         }
       }
     }
@@ -507,8 +504,8 @@ function calculate_crafting_cost(el)
       return null;
     }
 
-    let has_item_98   = special_items_to_craft.delete(item_data.items[97]);
-    let has_item_119  = special_items_to_craft.delete(item_data.items[118]);
+    let has_item_98   = special_items_to_craft.delete(item_by_number.get(98));
+    let has_item_119  = special_items_to_craft.delete(item_by_number.get(119));
 
     if (special_items_to_craft.size > 0) {
       console.warn("Unhandled special items", special_items_to_craft);
@@ -658,7 +655,7 @@ function craft_item(el)
 {
   let div = el.closest(".card_div");
   let num = parseInt(div.dataset.itemNumber, 10);
-  let item = item_by_number[num];
+  let item = item_by_number.get(num);
   let cost = calculate_crafting_cost(item);
   if (!cost) {
     // the item shouldn't be marked as craftable
@@ -720,10 +717,12 @@ function toggle_item_lock(el)
     unlocked_items.push(num);
     unlocked_items.sort((a, b) => a - b);
   }
+  //Dev mode only, used to clear the URL
   if (unlocked_items.length == 0) {
     update_hash();
     return;
   }
+
   let range = [unlocked_items[0], unlocked_items[0]];
   for (let i = 1; i < unlocked_items.length; ++i) {
     let num = unlocked_items[i];
