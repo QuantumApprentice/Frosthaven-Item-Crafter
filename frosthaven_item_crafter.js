@@ -609,22 +609,14 @@ function check_visible_and_craftable(el)
 }
 
 let last_overlayed_div;
-
 function toggle_overlay(card_div)
 {
   let div = card_div.closest(".card_div");
-
-  if (last_overlayed_div && last_overlayed_div != div) {
-    last_overlayed_div.classList.toggle("show_overlay");
+  if (last_overlayed_div !== div) {
+    last_overlayed_div?.classList.remove('show_overlay');
   }
-
-  if (div.classList.toggle("show_overlay")) {
-    last_overlayed_div = div;
-  }
-  else {
-    last_overlayed_div = null;
-  }
-
+  let shown = div.classList.toggle('show_overlay');
+  last_overlayed_div = shown ? div : null;
 }
 
 function create_item_card_div_html(item)
