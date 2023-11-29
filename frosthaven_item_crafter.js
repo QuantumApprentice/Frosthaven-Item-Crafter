@@ -150,7 +150,7 @@ function parse_hash(hash)
       }
 
       name = decodeURIComponent(name).trim();
-      if (name) document.getElementById(key).innerText = name;
+      document.getElementById(key).innerText = name || `Player ${indx}`;
 
       string_to_resources(players[indx], res_str || "");
 
@@ -323,7 +323,6 @@ document.querySelector("form").addEventListener("submit",
     submitEvent.preventDefault();
     parse_input();
 });
-
 
 for (const input_el of document.querySelectorAll("input")) {
   input_el.addEventListener("input", parse_input);
@@ -609,27 +608,50 @@ function check_visible_and_craftable(el)
   return [true, craftable];
 }
 
+let last_overlayed_div;
+
+function toggle_overlay(card_div)
+{
+  let div = card_div.closest(".card_div");
+
+  if (last_overlayed_div && last_overlayed_div != div) {
+    last_overlayed_div.classList.toggle("show_overlay");
+  }
+
+  if (div.classList.toggle("show_overlay")) {
+    last_overlayed_div = div;
+  }
+  else {
+    last_overlayed_div = null;
+  }
+
+}
+
 function create_item_card_div_html(item)
 {
   // we used to return the div here but returning the HTML
   // reduced loading time in non-scientific tests by 15-25%
-  let html = `<div id="item${item.number}" data-item-number="${item.number}" class="card_div locked">
+  let html = `<div id="item${item.number}"
+                  data-item-number="${item.number}"
+                  class="card_div locked"
+                  onClick="toggle_overlay(this)"
+                  >
     <img loading="lazy" class="card_front" src="./assets/item-images/${item.file}">
-    ${item.usage == 'f' ? `<img onclick="onItemCardClick(this)" 
-                            loading="lazy" 
-                            class="card_back hide_when_locked" 
+    ${item.usage == 'f' ? `<img onclick="flip_card(this)"
+                            loading="lazy"
+                            class="card_back hide_when_locked"
                             src="./assets/item-images/${item.file_back}">` : ''}
     <div class="card_overlay">
       <div class="card_name">
         <span class="card_number">${item.number}</span>
         <span class="hide_when_locked">${item.name}</span>
-        <span class="hide_when_unlocked">Locked Item</span>
+        <span class="hide_when_unlocked menu_button">Locked Item</span>
       </div>
-      <button class="hide_when_locked dev_tools" onClick="toggle_item_lock(this)">Lock</button>
-      <button class="hide_when_unlocked" onClick="toggle_item_lock(this)">Unlock</button>
-      <button class="hide_when_locked hide_when_owned" onClick="gain_item(this)">Gain</button>
-      <button class="hide_when_locked hide_when_not_craftable" onClick="craft_item(this)">Craft</button>
-      ${item.usage == 'f' ? `<button class="hide_when_locked" onclick="onItemCardClick(this)">Flip</button>` : ''}
+      <button class="hide_when_locked dev_tools menu_button" onClick="toggle_item_lock(this)">Lock</button>
+      <button class="hide_when_unlocked menu_button" onClick="toggle_item_lock(this)">Unlock</button>
+      <button class="hide_when_locked hide_when_owned menu_button" onClick="gain_item(this)">Gain</button>
+      <button class="hide_when_locked hide_when_not_craftable menu_button" onClick="craft_item(this)">Craft</button>
+      ${item.usage == 'f' ? `<button class="hide_when_locked flip_button" onClick="flip_card(this)"><img src="./assets/flip.png" alt="Flip"></button>` : ''}
     </div>
   </div>`;
   return html;
@@ -737,7 +759,7 @@ function toggle_item_lock(el)
   update_hash();
 }
 
-function onItemCardClick(el)
+function flip_card(el)
 {
   let div = el.closest(".card_div");
   let backImg = div.querySelector('.card_back');
